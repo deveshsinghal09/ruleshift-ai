@@ -11,10 +11,10 @@ export default defineConfig({
     },
   },
   test: {
-    environment: "jsdom",
+    environment: "node",
     globals: true,
-    maxWorkers: 4,
-    setupFiles: ["./vitest.setup.ts"],
-    include: ["src/**/*.test.{ts,tsx}", "tests/**/*.test.{ts,tsx}"],
+    hookTimeout: 30_000,
+    include: ["tests/database/**/*.database.ts"],
+    testTimeout: 30_000,
   },
 });

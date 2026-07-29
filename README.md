@@ -4,19 +4,18 @@ RuleShift AI is a browser-based adventure where an AI Dungeon Master can propose
 changes to the story, world, and rules while a deterministic game engine protects
 authoritative state.
 
-The repository currently contains the Phase 4 local playable frontend: the
-approved design system, character passport flow, deterministic TypeScript game
-engine, seeded local event provider, four-turn adventure, and result screen.
-RuleShift processing, real AI, database persistence, authentication, and
-deployment remain reserved for later approved phases.
+The repository currently contains the Phase 7 MVP foundation: the approved
+design system, deterministic game and RuleShift engines, provider-neutral Gemini
+AI direction with deterministic fallback, and PostgreSQL-backed private game
+sessions.
 
 ## Requirements
 
-- Node.js 20.9 or newer
+- Node.js 20.19 or newer
 - npm 10 or newer
+- PostgreSQL 15 or newer (local, Neon, or another development instance)
 
-No API keys, database, or cloud services are required for the current local
-demo.
+Gemini is optional. PostgreSQL is required for persisted browser play.
 
 ## Local setup
 
@@ -24,6 +23,21 @@ Install the locked dependencies:
 
 ```powershell
 npm ci
+```
+
+Create `.env.local` (never commit it) and add your development connection:
+
+```dotenv
+DATABASE_URL=postgresql://USER:PASSWORD@HOST/DATABASE?sslmode=verify-full
+```
+
+For Neon, copy the pooled development connection string from the Neon Console.
+Keep the credential only in `.env.local`; do not paste it into chat, source
+files, screenshots, or commits. Apply the prepared migration only after
+confirming the URL points to the intended development database:
+
+```powershell
+npm run db:migrate:dev
 ```
 
 Start the development server:
@@ -41,11 +55,12 @@ Open `http://localhost:3000`.
 | `/` | Landing page and animated RuleShift preview |
 | `/create` | Character, mood, difficulty, and passport flow |
 | `/game/[sessionId]` | Scripted four-turn adventure console |
-| `/result/[sessionId]` | Persisted local adventure result |
+| `/result/[sessionId]` | Private persisted adventure result |
 | `/design-system` | Component calibration gallery |
 
-Game sessions are stored in browser local storage and validated before they are
-restored. They are local engine states, not database records.
+Game sessions are stored in PostgreSQL. A cryptographically random anonymous
+owner token is kept in a secure HTTP-only cookie; only its SHA-256 hash is
+stored in the database.
 
 ## Deterministic engine
 
@@ -61,8 +76,22 @@ progression, and outcomes.
   quest, reward, and trap events with validated choices.
 - React renders engine results and never calculates authoritative gameplay
   values.
-- The Phase 3 RuleShift moment remains a narrative preview only. RuleShift
-  mechanics are intentionally deferred.
+- Predefined RuleShift behavior is registered TypeScript code. AI output may
+  propose known keys but cannot execute code or directly control outcomes.
+
+## Persistence and APIs
+
+- `POST /api/sessions` creates an owned session.
+- `GET /api/sessions` lists resumable sessions for the current anonymous owner.
+- `GET` and `DELETE /api/sessions/[sessionId]` restore or abandon a session.
+- `POST /api/sessions/[sessionId]/actions` processes one versioned,
+  idempotent, authoritative turn.
+- `GET /api/sessions/[sessionId]/result` returns completed result data.
+
+Turns use optimistic state versions, unique idempotency keys, a unique
+session/turn constraint, and a serializable transaction containing the current
+snapshot, before/after event snapshots, normalized inventory/NPC/rule state,
+and the response replay record.
 
 ## Verification
 
@@ -73,6 +102,14 @@ npm run typecheck
 npm run lint
 npm test
 npm run build
+```
+
+Database integration tests run separately and only against the explicitly
+configured development/test database:
+
+```powershell
+$env:TEST_DATABASE_URL = $env:DATABASE_URL
+npm run db:test
 ```
 
 ## Available scripts
@@ -86,13 +123,20 @@ npm run build
 | `npm run typecheck` | Run strict TypeScript validation |
 | `npm test` | Run the Vitest suite once |
 | `npm run test:watch` | Run Vitest in watch mode |
+| `npm run db:validate` | Validate the Prisma schema without connecting |
+| `npm run db:generate` | Generate the Prisma client |
+| `npm run db:migrate:dev` | Safely apply development migrations |
+| `npm run db:test` | Run live PostgreSQL repository integration tests |
 
 ## Environment variables
 
-The current demo does not require application environment variables. Future
-variable names will be documented in `.env.example` without secret values.
-Credentials must be configured locally or in the selected hosting provider and
-must never be committed.
+- `DATABASE_URL` — server-only development PostgreSQL connection.
+- `TEST_DATABASE_URL` — optional isolated PostgreSQL connection used by
+  `npm run db:test`; falls back to `DATABASE_URL`.
+- `GEMINI_API_KEY` and `GEMINI_MODEL` — optional server-only AI configuration.
+
+`.env.example` contains names only. Credentials must be configured in
+`.env.local` and must never be committed.
 
 ## Security defaults
 
@@ -100,4 +144,8 @@ must never be committed.
 - Responses include basic framing, MIME-sniffing, referrer, browser-feature, and
   cross-origin isolation headers.
 - Environment values are selected explicitly and validated with Zod.
+- Mutations enforce same-origin requests, bounded JSON bodies, Zod schemas,
+  anonymous ownership, optimistic versions, idempotency, and rate limits.
+- Raw owner tokens and database/provider credentials are never logged or stored
+  in application tables.
 - Local environment files are ignored while `.env.example` remains tracked.

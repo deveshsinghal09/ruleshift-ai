@@ -43,6 +43,8 @@ a reliable two-minute scenario featuring Devesh, the Placement Warrior.
 - AI responses are structured, validated with Zod, and never executed as code.
 - The game remains playable through predefined fallback events when AI services
   are unavailable.
+- Private single-player sessions persist in PostgreSQL and are scoped to an
+  anonymous secure-cookie owner. Authoritative turns commit atomically.
 - The MVP is single-player and card-based; multiplayer, real-time physics, and
   other advanced features remain out of scope.
 

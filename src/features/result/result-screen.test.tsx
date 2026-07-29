@@ -25,7 +25,7 @@ describe("ResultScreen", () => {
     pushMock.mockClear();
   });
 
-  it("shows the completed result, timeline, and local share placeholder", async () => {
+  it("shows the completed result, timeline, and private share placeholder", async () => {
     const user = userEvent.setup();
     const transport = createLocalAdventureTransport({
       delayMs: 0,
@@ -72,7 +72,7 @@ describe("ResultScreen", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Future share link")).toHaveValue(
-      "ruleshift.local/result/result-flow",
+      "/result/result-flow",
     );
   });
 });

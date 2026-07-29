@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createLocalAdventureTransport } from "@/features/adventure/engine-transport";
+import { createHttpAdventureTransport } from "@/features/adventure/http-transport";
 import type {
   AdventureTransport,
   GameState,
@@ -23,7 +23,7 @@ export function useGame(
   providedTransport?: AdventureTransport,
 ): UseGameResult {
   const transport = useMemo(
-    () => providedTransport ?? createLocalAdventureTransport(),
+    () => providedTransport ?? createHttpAdventureTransport(),
     [providedTransport],
   );
   const [state, setState] = useState<GameState | null>(null);
@@ -43,13 +43,13 @@ export function useGame(
           setError(
             restored
               ? null
-              : "This local adventure was not found. Start a new passport to continue.",
+              : "This adventure was not found or belongs to another browser.",
           );
         }
       } catch {
         if (isActive) {
           setError(
-            "The local adventure could not be restored. Start a new passport to continue.",
+            "The adventure archive could not be restored. Try again shortly.",
           );
         }
       } finally {
