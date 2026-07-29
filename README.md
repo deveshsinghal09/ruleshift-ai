@@ -4,16 +4,18 @@ RuleShift AI is a browser-based adventure where an AI Dungeon Master can propose
 changes to the story, world, and rules while a deterministic game engine protects
 authoritative state.
 
-This repository currently contains the Phase 1 project foundation only. Gameplay,
-the production design system, AI integration, persistence, and deployment are
-intentionally reserved for later approved phases.
+The repository currently contains the Phase 3 local playable frontend: the
+approved design system, character passport flow, four-turn scripted adventure,
+and result screen. The deterministic engine, real AI, database persistence,
+authentication, and deployment remain reserved for later approved phases.
 
 ## Requirements
 
 - Node.js 20.9 or newer
 - npm 10 or newer
 
-No API keys, database, or cloud services are required for Phase 1.
+No API keys, database, or cloud services are required for the current local
+demo.
 
 ## Local setup
 
@@ -31,9 +33,22 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+## Demo routes
+
+| Route | Purpose |
+| --- | --- |
+| `/` | Landing page and animated RuleShift preview |
+| `/create` | Character, mood, difficulty, and passport flow |
+| `/game/[sessionId]` | Scripted four-turn adventure console |
+| `/result/[sessionId]` | Persisted local adventure result |
+| `/design-system` | Component calibration gallery |
+
+Game sessions are stored in browser local storage and validated before they are
+restored. They are mock data, not database records.
+
 ## Verification
 
-Run each Phase 1 quality check:
+Run the complete quality suite:
 
 ```powershell
 npm run typecheck
@@ -56,10 +71,10 @@ npm run build
 
 ## Environment variables
 
-Phase 1 does not require application environment variables. Future variable
-names will be documented in `.env.example` without secret values. Credentials
-must be configured locally or in the selected hosting provider and must never be
-committed.
+The current demo does not require application environment variables. Future
+variable names will be documented in `.env.example` without secret values.
+Credentials must be configured locally or in the selected hosting provider and
+must never be committed.
 
 ## Security defaults
 
