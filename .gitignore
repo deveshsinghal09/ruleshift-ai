@@ -1,0 +1,32 @@
+# Dependencies
+/node_modules
+
+# Next.js output
+/.next
+/out
+
+# Test output
+/coverage
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor and operating-system files
+.DS_Store
+Thumbs.db
+*.swp
+
+# TypeScript
+*.tsbuildinfo
+
+# Vercel
+.vercel
