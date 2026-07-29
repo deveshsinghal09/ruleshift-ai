@@ -191,9 +191,11 @@ function createPuzzleEvent(state: GameState): LocalGameEvent {
   return {
     announcement: {
       description:
-        "Incorrect answers appear dangerous to the examiner. This is narrative preview only; Phase 4 does not alter mechanics with RuleShifts.",
+        "Incorrect answers now deal registered, deterministic damage to the examiner.",
       id: "incorrectly-correct-preview",
       name: "Incorrectly Correct",
+      parameters: { damage: 24 },
+      ruleKey: "wrong_answers_hurt_enemies",
       totalTurns: 3,
       type: "ruleshift-preview",
     },
@@ -217,12 +219,12 @@ function createPuzzleEvent(state: GameState): LocalGameEvent {
       ...attackChoices.slice(1),
     ],
     dmAside:
-      "Reality is previewing a corrupted rubric. The deterministic engine is still in charge.",
+      "Reality changed the rubric, but the registered deterministic engine is still in charge.",
     enemyId: "infinite-examiner",
     id: "incorrect-damage-preview",
     kind: "puzzle",
     narration:
-      "The campus compiler stutters. A magenta seam cuts through the exam hall, hinting that wrong answers may become weapons in a later phase.",
+      "The campus compiler stutters. A magenta seam cuts through the exam hall, and wrong answers become registered weapons.",
     title: "An unstable rubric interrupts the assessment",
   };
 }

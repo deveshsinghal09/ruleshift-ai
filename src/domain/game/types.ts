@@ -242,6 +242,8 @@ export interface EventAnnouncement {
   readonly description: string;
   readonly id: string;
   readonly name: string;
+  readonly parameters: RuleParameters;
+  readonly ruleKey: RuleKey;
   readonly totalTurns: number;
   readonly type: "ruleshift-preview";
 }
@@ -269,6 +271,7 @@ export interface GameHistoryEntry {
   readonly eventId: string;
   readonly id: string;
   readonly kind: EventKind;
+  readonly ruleEvents: readonly RuleLifecycleEvent[];
   readonly title: string;
   readonly turn: number;
 }
@@ -308,6 +311,7 @@ export type DefeatCondition =
     };
 
 export interface GameState {
+  readonly activeRules: readonly ActiveRule[];
   readonly currentEvent: LocalGameEvent;
   readonly defeatConditions: readonly DefeatCondition[];
   readonly difficulty: Difficulty;
@@ -319,6 +323,7 @@ export interface GameState {
   readonly player: Player;
   readonly processedActionIds: readonly string[];
   readonly randomState: number;
+  readonly ruleEvents: readonly RuleLifecycleEvent[];
   readonly score: number;
   readonly seed: string;
   readonly sessionId: string;
@@ -333,6 +338,7 @@ export interface GameState {
 export interface TurnResult {
   readonly effects: readonly Effect[];
   readonly event: LocalGameEvent;
+  readonly ruleEvents: readonly RuleLifecycleEvent[];
   readonly state: GameState;
 }
 
@@ -354,3 +360,9 @@ export interface EventProvider {
 export interface ProcessTurnContext {
   readonly eventProvider: EventProvider;
 }
+import type {
+  ActiveRule,
+  RuleKey,
+  RuleLifecycleEvent,
+  RuleParameters,
+} from "@/domain/rules/types";

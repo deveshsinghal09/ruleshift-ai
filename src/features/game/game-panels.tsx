@@ -169,8 +169,7 @@ export function ObjectivePanel({ state }: { state: GameState }) {
 }
 
 export function RulePanel({ state }: { state: GameState }) {
-  const announcement = state.currentEvent.announcement;
-  if (!announcement) {
+  if (state.activeRules.length === 0) {
     return (
       <section aria-labelledby="rule-panel-title">
         <p className="font-system text-[0.6875rem] text-muted-foreground">
@@ -180,39 +179,50 @@ export function RulePanel({ state }: { state: GameState }) {
           Reality is currently stable
         </h2>
         <p className="mt-2 text-sm leading-6 text-secondary-foreground">
-          Phase 4 contains no active RuleShift mechanics.
+          No registered gameplay mutation is active this turn.
         </p>
       </section>
     );
   }
 
   return (
-    <section aria-labelledby="rule-panel-title">
-      <div className="flex items-center justify-between gap-3">
+    <section aria-labelledby="rule-panel-title" className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <Badge variant="ruleshift">
           <Zap aria-hidden="true" className="size-3" />
-          RuleShift preview
+          {state.activeRules.length} active
         </Badge>
         <span className="font-system text-xs text-ruleshift">
-          NARRATIVE ONLY
+          REGISTERED
         </span>
       </div>
-      <h2
-        className="mt-4 font-display text-base font-semibold"
-        id="rule-panel-title"
-      >
-        {announcement.name}
+      <h2 className="sr-only" id="rule-panel-title">
+        Active RuleShifts
       </h2>
-      <p className="mt-2 text-sm leading-6 text-secondary-foreground">
-        {announcement.description}
-      </p>
-      <Progress
-        className="mt-4"
-        label="RuleShift preview"
-        value={100}
-        valueLabel="No mechanics applied"
-        variant="ruleshift"
-      />
+      <div className="space-y-5">
+        {state.activeRules.map((rule) => (
+          <article className="min-w-0" key={rule.id}>
+            <div className="flex items-start justify-between gap-3">
+              <h3 className="min-w-0 break-words font-display text-base font-semibold">
+                {rule.name}
+              </h3>
+              <span className="shrink-0 font-system text-xs text-ruleshift">
+                {rule.remainingTurns}/{rule.totalTurns}
+              </span>
+            </div>
+            <p className="mt-2 break-words text-sm leading-6 text-secondary-foreground">
+              {rule.uiExplanation}
+            </p>
+            <Progress
+              className="mt-4"
+              label={`${rule.name} duration`}
+              value={(rule.remainingTurns / rule.totalTurns) * 100}
+              valueLabel={`${rule.remainingTurns} turns remaining`}
+              variant="ruleshift"
+            />
+          </article>
+        ))}
+      </div>
     </section>
   );
 }
@@ -322,6 +332,21 @@ export function TimelineList({
             <p className="mt-1 text-sm leading-6 text-secondary-foreground">
               {event.description}
             </p>
+            {event.ruleEvents.map((ruleEvent) => (
+              <p
+                className="mt-2 flex items-start gap-2 text-sm leading-6 text-ruleshift"
+                key={ruleEvent.id}
+              >
+                <Zap
+                  aria-hidden="true"
+                  className="mt-1 size-3.5 shrink-0"
+                />
+                <span>
+                  <span className="font-semibold">{ruleEvent.ruleName}</span>{" "}
+                  {ruleEvent.type}: {ruleEvent.message}
+                </span>
+              </p>
+            ))}
           </div>
         </li>
       ))}

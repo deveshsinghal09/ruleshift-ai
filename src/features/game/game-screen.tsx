@@ -52,6 +52,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { getActionEnergyCost } from "@/domain/game/difficulty";
 import { customActionTextSchema } from "@/domain/game/schemas";
 import type { LocalGameEvent } from "@/domain/game/types";
+import { getRuleActionAvailability } from "@/domain/rules/lifecycle";
 import { moodNarrativeCues } from "@/features/adventure/mock-data";
 import type {
   AdventureTransport,
@@ -172,6 +173,10 @@ export function GameScreen({
 
   const scene = state.currentEvent;
   const announcement = scene.announcement;
+  const announcedRule = announcement
+    ? state.activeRules.find((rule) => rule.id === announcement.id)
+    : undefined;
+  const latestRuleEvent = state.ruleEvents.at(-1);
   const showAnnouncement =
     announcement !== undefined &&
     announcement.id !== dismissedAnnouncementId;
@@ -223,6 +228,16 @@ export function GameScreen({
                   state.difficulty,
                   action.energyCost,
                 );
+                const ruleAvailability = getRuleActionAvailability(
+                  state,
+                  action,
+                );
+                const unavailableReason =
+                  action.unavailableReason ??
+                  ruleAvailability.reason ??
+                  (state.player.energy < energyCost
+                    ? "Not enough energy for this action."
+                    : undefined);
                 return (
                   <button
                     className={cn(
@@ -234,10 +249,12 @@ export function GameScreen({
                     disabled={
                       isSubmitting ||
                       !action.available ||
+                      !ruleAvailability.available ||
                       state.player.energy < energyCost
                     }
                     key={action.id}
                     onClick={() => void resolveAction({ actionId: action.id })}
+                    title={unavailableReason}
                     type="button"
                   >
                     <span className="flex items-start justify-between gap-4">
@@ -253,6 +270,11 @@ export function GameScreen({
                       <span>{action.risk.toUpperCase()} RISK</span>
                       <span>−{energyCost} ENERGY</span>
                     </span>
+                    {unavailableReason ? (
+                      <span className="mt-2 block text-xs leading-5 text-danger">
+                        {unavailableReason}
+                      </span>
+                    ) : null}
                   </button>
                 );
               })}
@@ -319,6 +341,29 @@ export function GameScreen({
                 className="size-4 animate-pulse text-ai motion-reduce:animate-none"
               />
               The deterministic engine is resolving this turn…
+            </div>
+          ) : null}
+
+          {latestRuleEvent &&
+          latestRuleEvent.turn === state.turn &&
+          (latestRuleEvent.type === "expired" ||
+            latestRuleEvent.type === "replaced" ||
+            latestRuleEvent.type === "rejected") ? (
+            <div
+              aria-live="polite"
+              className="flex items-start gap-3 rounded-md border border-ruleshift/35 bg-ruleshift/8 px-4 py-3 text-sm"
+              role="status"
+            >
+              <Zap
+                aria-hidden="true"
+                className="mt-0.5 size-4 shrink-0 text-ruleshift"
+              />
+              <span>
+                <strong className="font-semibold">
+                  RuleShift {latestRuleEvent.type}.
+                </strong>{" "}
+                {latestRuleEvent.message}
+              </span>
             </div>
           ) : null}
 
@@ -421,9 +466,9 @@ export function GameScreen({
             </Badge>
             <DialogTitle>{announcement?.name}</DialogTitle>
             <DialogDescription>
-              {announcement?.description} Health, energy, score, inventory,
-              objectives, and outcomes remain controlled by the deterministic
-              engine.
+              {announcement?.description} The registered rule may alter this
+              turn, while health, energy, score, inventory, objectives, and
+              outcomes remain validated by the deterministic engine.
             </DialogDescription>
           </DialogHeader>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -432,7 +477,7 @@ export function GameScreen({
                 BEFORE
               </p>
               <p className="mt-2 text-sm text-secondary-foreground line-through">
-                RuleShift mechanics are not active in Phase 4.
+                The assessment rubric follows ordinary combat rules.
               </p>
             </div>
             <div className="rounded-md border border-ruleshift/50 bg-ruleshift/8 p-4">
@@ -440,10 +485,17 @@ export function GameScreen({
                 AFTER
               </p>
               <p className="mt-2 text-sm font-semibold">
-                Narrative anomaly detected; deterministic rules remain active.
+                {announcedRule?.uiExplanation ??
+                  "The proposal was rejected by the safe rule registry."}
               </p>
             </div>
           </div>
+          {announcedRule ? (
+            <p className="mt-4 font-system text-xs text-ruleshift">
+              {announcedRule.remainingTurns} OF {announcedRule.totalTurns} TURNS
+              REMAIN
+            </p>
+          ) : null}
           <DialogFooter>
             <Button
               onClick={() =>
@@ -629,7 +681,11 @@ function MobileCommandDock({
       />
       <MobileDockButton
         icon={Zap}
-        label={state.currentEvent.announcement ? "Rule preview" : "Rule"}
+        label={
+          state.activeRules.length > 0
+            ? `Rules ${state.activeRules.length}`
+            : "Rules"
+        }
         onClick={() => onOpen("rule")}
       />
       <MobileDockButton

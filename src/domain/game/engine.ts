@@ -27,6 +27,13 @@ import { evaluateOutcome } from "@/domain/game/outcomes";
 import { calculateActionScore } from "@/domain/game/scoring";
 import { validateGameState } from "@/domain/game/schemas";
 import { hashSeed } from "@/domain/game/seeded-random";
+import {
+  activateRuleFromEvent,
+  applyRuleEventHooks,
+  prepareRuleAction,
+  resolveRuleEffects,
+  tickActiveRules,
+} from "@/domain/rules/lifecycle";
 import type {
   CharacterProfile,
   Difficulty,
@@ -62,6 +69,8 @@ function createHistoryEntry(
   action: GameAction,
   effects: readonly Effect[],
   nextState: GameState,
+  ruleEvents: GameHistoryEntry["ruleEvents"],
+  submittedActionId: string,
 ): GameHistoryEntry {
   const title =
     state.currentEvent.id === "campus-gates"
@@ -91,13 +100,14 @@ function createHistoryEntry(
       : `${action.label}. The deterministic engine resolved the consequences.`;
 
   return {
-    actionId: action.id,
+    actionId: submittedActionId,
     actionLabel: action.label,
     description,
     effects,
     eventId: state.currentEvent.id,
     id: `history-${state.turn + 1}-${action.id}`,
     kind: state.currentEvent.kind,
+    ruleEvents,
     title,
     turn: state.turn + 1,
   };
@@ -125,6 +135,7 @@ export function createInitialGameState(
 ): GameState {
   const rules = difficultyRules[input.difficulty];
   const state: GameState = {
+    activeRules: [],
     currentEvent: createInitialLocalEvent(),
     defeatConditions: [
       { type: "player-health-zero" },
@@ -179,6 +190,7 @@ export function createInitialGameState(
     },
     processedActionIds: [],
     randomState: hashSeed(input.seed),
+    ruleEvents: [],
     score: 0,
     seed: input.seed,
     sessionId: input.sessionId,
@@ -219,6 +231,7 @@ export function processTurn(
   context: ProcessTurnContext = { eventProvider: localEventProvider },
 ): TurnResult {
   const state = validateGameState(inputState);
+  const activeAtTurnStart = state.activeRules.map((rule) => rule.id);
   if (state.status !== "playing") {
     throw new GameEngineError(
       "POST_GAME_ACTION",
@@ -233,13 +246,15 @@ export function processTurn(
     );
   }
 
-  const action = getCanonicalAction(state, submittedAction);
-  assertActionAvailable(state, action);
+  const canonicalAction = getCanonicalAction(state, submittedAction);
+  const prepared = prepareRuleAction(state, canonicalAction);
+  const action = prepared.action;
+  assertActionAvailable(prepared.state, action);
   const energyCost = getActionEnergyCost(
     state.difficulty,
     action.energyCost,
   );
-  if (state.player.energy < energyCost) {
+  if (prepared.state.player.energy < energyCost) {
     throw new GameEngineError(
       "INSUFFICIENT_ENERGY",
       "The player does not have enough energy for that action.",
@@ -247,10 +262,14 @@ export function processTurn(
   }
 
   let nextState: GameState = {
-    ...state,
-    player: { ...state.player, defending: 0 },
+    ...prepared.state,
+    player: { ...prepared.state.player, defending: 0 },
+    randomState: prepared.randomState,
   };
-  const appliedEffects: Effect[] = [];
+  const appliedEffects: Effect[] = [...prepared.effects];
+  if (prepared.effects.length > 0) {
+    nextState = applyEffects(nextState, prepared.effects);
+  }
   if (energyCost > 0) {
     const energyEffect: Effect = {
       amount: -energyCost,
@@ -265,9 +284,16 @@ export function processTurn(
     action,
     nextState.randomState,
   );
-  appliedEffects.push(...resolution.effects);
-  nextState = applyEffects(nextState, resolution.effects);
-  let randomState = resolution.randomState;
+  const ruledResolution = resolveRuleEffects(
+    nextState,
+    action,
+    resolution.effects,
+    resolution.randomState,
+  );
+  nextState = ruledResolution.state;
+  appliedEffects.push(...ruledResolution.effects);
+  nextState = applyEffects(nextState, ruledResolution.effects);
+  let randomState = ruledResolution.randomState;
 
   for (const previousEnemy of state.enemies) {
     const nextEnemy = nextState.enemies.find(
@@ -324,7 +350,7 @@ export function processTurn(
   nextState = {
     ...nextState,
     lastAction: action.label,
-    processedActionIds: [...state.processedActionIds, action.id],
+    processedActionIds: [...state.processedActionIds, submittedAction.id],
     randomState,
     statistics: {
       ...nextState.statistics,
@@ -344,16 +370,13 @@ export function processTurn(
   };
 
   nextState = { ...nextState, status: evaluateOutcome(nextState) };
-  const historyEntry = createHistoryEntry(
-    state,
-    action,
-    appliedEffects,
+  const tickedRules = tickActiveRules(
     nextState,
+    activeAtTurnStart,
+    nextState.status !== "playing",
   );
-  nextState = {
-    ...nextState,
-    history: [...nextState.history, historyEntry],
-  };
+  nextState = tickedRules.state;
+  const turnRuleEvents = [...tickedRules.events];
 
   let nextEvent = nextState.currentEvent;
   if (nextState.status === "playing") {
@@ -368,12 +391,34 @@ export function processTurn(
       currentEvent: nextEvent,
       randomState: generated.randomState,
     };
+    const eventHooks = applyRuleEventHooks(nextState);
+    nextState = {
+      ...eventHooks.state,
+      randomState: eventHooks.randomState,
+    };
+    const activation = activateRuleFromEvent(nextState);
+    nextState = activation.state;
+    turnRuleEvents.push(...activation.events);
   }
+
+  const historyEntry = createHistoryEntry(
+    state,
+    action,
+    appliedEffects,
+    nextState,
+    turnRuleEvents,
+    submittedAction.id,
+  );
+  nextState = {
+    ...nextState,
+    history: [...nextState.history, historyEntry],
+  };
 
   const validatedState = freezeDeep(validateGameState(nextState));
   return freezeDeep({
     effects: [...appliedEffects],
     event: nextEvent,
+    ruleEvents: turnRuleEvents,
     state: validatedState,
   });
 }

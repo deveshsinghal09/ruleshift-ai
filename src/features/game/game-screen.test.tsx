@@ -2,6 +2,8 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createLocalAdventureTransport } from "@/features/adventure/engine-transport";
+import { saveGameSession } from "@/features/adventure/storage";
+import { activateRule } from "@/domain/rules/lifecycle";
 import type {
   AdventureTransport,
   CharacterPassport,
@@ -82,6 +84,12 @@ describe("GameScreen", () => {
       expect(
         await screen.findByRole("dialog", { name: "Incorrectly Correct" }),
       ).toBeInTheDocument();
+      expect(
+        screen.getAllByText(
+          /Clearly wrong answers deal an additional fixed amount/i,
+        ).length,
+      ).toBeGreaterThan(0);
+      expect(screen.getByText("3 OF 3 TURNS REMAIN")).toBeInTheDocument();
       await user.click(
         screen.getByRole("button", {
           name: "Continue with deterministic rules",
@@ -113,6 +121,9 @@ describe("GameScreen", () => {
       ).toBeInTheDocument();
       expect(
         screen.getByText("The examiner failed its own assessment"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/Incorrectly Correct activated/i),
       ).toBeInTheDocument();
       await user.click(screen.getByRole("button", { name: "Close panel" }));
 
@@ -175,5 +186,38 @@ describe("GameScreen", () => {
       resolveSubmission(session);
       await pendingSubmission;
     });
+  });
+
+  it("shows authoritative rule expiration feedback after duration reaches zero", async () => {
+    const user = userEvent.setup();
+    const transport = createLocalAdventureTransport({
+      delayMs: 0,
+      idFactory: () => "expiration-flow",
+    });
+    const session = await transport.createSession(passport);
+    const ruledSession = activateRule(session, {
+      duration: 1,
+      id: "one-turn-rule",
+      key: "no_repeat_action",
+      parameters: {},
+    }).state;
+    saveGameSession(ruledSession);
+    render(<GameScreen sessionId={session.sessionId} transport={transport} />);
+
+    await user.click(
+      await screen.findByRole("button", {
+        name: /Follow the bell into the archive/i,
+      }),
+    );
+
+    expect(
+      await screen.findByText(/RuleShift expired/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/No Repeat Action expired/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Reality is currently stable").length,
+    ).toBeGreaterThan(0);
   });
 });

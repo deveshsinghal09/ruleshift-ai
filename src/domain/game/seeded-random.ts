@@ -64,3 +64,21 @@ export function randomItem<T>(
     value: items[index.value] as T,
   };
 }
+
+export function shuffle<T>(
+  state: number,
+  items: readonly T[],
+): RandomResult<readonly T[]> {
+  const shuffled = [...items];
+  let nextState = state;
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const selection = randomInt(nextState, 0, index);
+    nextState = selection.state;
+    const selected = shuffled[selection.value] as T;
+    shuffled[selection.value] = shuffled[index] as T;
+    shuffled[index] = selected;
+  }
+
+  return { state: nextState, value: shuffled };
+}

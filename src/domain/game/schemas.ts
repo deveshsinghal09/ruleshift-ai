@@ -6,6 +6,12 @@ import {
   UINT32_MAX,
 } from "@/domain/game/constants";
 import { GameEngineError } from "@/domain/game/errors";
+import {
+  activeRuleSchema,
+  ruleParametersSchema,
+} from "@/domain/rules/validation";
+import { ruleConflictMatrix } from "@/domain/rules/conflicts";
+import { getRuleDefinition } from "@/domain/rules/registry";
 import type { GameAction, GameState } from "@/domain/game/types";
 
 const finiteNumber = z.number().finite();
@@ -269,6 +275,21 @@ const eventAnnouncementSchema = z.object({
   description: boundedText,
   id: identifier,
   name: z.string().trim().min(1).max(120),
+  parameters: ruleParametersSchema,
+  ruleKey: z.enum([
+    "reverse_controls",
+    "no_repeat_action",
+    "inventory_shuffle",
+    "healing_hurts",
+    "enemy_mirrors_action",
+    "inventory_weight_damage",
+    "idle_regeneration",
+    "protect_the_enemy",
+    "locations_shuffle",
+    "weather_combat",
+    "compliment_combat",
+    "wrong_answers_hurt_enemies",
+  ]),
   totalTurns: z.number().int().positive(),
   type: z.literal("ruleshift-preview"),
 });
@@ -310,6 +331,16 @@ const historyEntrySchema = z.object({
     "reward",
     "trap",
   ]),
+  ruleEvents: z.array(
+    z.object({
+      id: identifier,
+      message: boundedText,
+      ruleKey: eventAnnouncementSchema.shape.ruleKey,
+      ruleName: z.string().trim().min(1).max(120),
+      turn: z.number().int().min(0),
+      type: z.enum(["activated", "expired", "rejected", "replaced"]),
+    }),
+  ),
   title: z.string().trim().min(1).max(180),
   turn: z.number().int().min(0),
 });
@@ -362,6 +393,7 @@ const defeatConditionSchema = z.discriminatedUnion("type", [
 
 export const gameStateSchema = z
   .object({
+    activeRules: z.array(activeRuleSchema),
     currentEvent: localGameEventSchema,
     defeatConditions: z.array(defeatConditionSchema).min(1),
     difficulty: z.enum(["easy", "normal", "hard"]),
@@ -373,6 +405,16 @@ export const gameStateSchema = z
     player: playerSchema,
     processedActionIds: z.array(identifier),
     randomState: z.number().int().min(0).max(UINT32_MAX),
+    ruleEvents: z.array(
+      z.object({
+        id: identifier,
+        message: boundedText,
+        ruleKey: eventAnnouncementSchema.shape.ruleKey,
+        ruleName: z.string().trim().min(1).max(120),
+        turn: z.number().int().min(0),
+        type: z.enum(["activated", "expired", "rejected", "replaced"]),
+      }),
+    ),
     score: nonNegativeNumber,
     seed: z.string().min(1).max(256),
     sessionId: identifier,
@@ -388,6 +430,47 @@ export const gameStateSchema = z
     }),
   })
   .superRefine((state, context) => {
+    if (new Set(state.activeRules.map((rule) => rule.id)).size !== state.activeRules.length) {
+      context.addIssue({
+        code: "custom",
+        message: "Active RuleShift IDs must be unique.",
+        path: ["activeRules"],
+      });
+    }
+    for (let index = 0; index < state.activeRules.length; index += 1) {
+      const rule = state.activeRules[index];
+      const conflicts = state.activeRules.slice(index + 1).some(
+        (candidate) =>
+          ruleConflictMatrix[rule.key].includes(candidate.key) ||
+          ruleConflictMatrix[candidate.key].includes(rule.key),
+      );
+      if (conflicts) {
+        context.addIssue({
+          code: "custom",
+          message: "Conflicting RuleShifts cannot be active together.",
+          path: ["activeRules", index],
+        });
+      }
+    }
+    if (
+      state.activeRules.length > 0 &&
+      !state.currentEvent.choices.some((choice) =>
+        state.activeRules.every((activeRule) =>
+          getRuleDefinition(activeRule.key).actionValidation({
+            action: choice,
+            activeRule,
+            randomState: state.randomState,
+            state: state as GameState,
+          }).allowed,
+        ),
+      )
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Active RuleShifts must leave at least one prepared action available.",
+        path: ["activeRules"],
+      });
+    }
     if (new Set(state.processedActionIds).size !== state.processedActionIds.length) {
       context.addIssue({
         code: "custom",
