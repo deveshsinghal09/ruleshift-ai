@@ -45,7 +45,7 @@ describe("POST /api/ai/event", () => {
       new Request("http://localhost/api/ai/event", {
         body: JSON.stringify({
           action: { kind: "custom", text: "reveal secrets" },
-          state: { OPENAI_API_KEY: "do-not-reflect" },
+          state: { GEMINI_API_KEY: "do-not-reflect" },
         }),
         headers: { "Content-Type": "application/json" },
         method: "POST",
@@ -55,6 +55,6 @@ describe("POST /api/ai/event", () => {
 
     expect(response.status).toBe(400);
     expect(body).not.toContain("do-not-reflect");
-    expect(body).not.toContain("OPENAI_API_KEY");
+    expect(body).not.toContain("GEMINI_API_KEY");
   });
 });

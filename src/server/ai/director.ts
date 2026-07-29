@@ -10,6 +10,7 @@ import { AI_FALLBACK_MESSAGE } from "@/lib/ai-messages";
 import { convertEventProposal, validateGeneratedContent } from "@/server/ai/policy";
 import { buildAiPrompts } from "@/server/ai/prompts";
 import type { AiProvider } from "@/server/ai/providers/types";
+import { AiProviderError } from "@/server/ai/providers/types";
 import { parseProviderJson } from "@/server/ai/repair";
 import {
   eventGenerationSchema,
@@ -32,7 +33,11 @@ import type {
 
 export type AiDiagnosticCode =
   | "provider-disabled"
+  | "provider-authentication"
   | "provider-error"
+  | "provider-quota"
+  | "provider-request"
+  | "provider-unavailable"
   | "timeout"
   | "invalid-json"
   | "schema-invalid"
@@ -108,6 +113,9 @@ function classifyFailure(error: unknown): AiDiagnosticCode {
   }
   if (error instanceof Error && error.name === "AiPolicyError") {
     return "policy-rejected";
+  }
+  if (error instanceof AiProviderError) {
+    return `provider-${error.code}`;
   }
   return "provider-error";
 }

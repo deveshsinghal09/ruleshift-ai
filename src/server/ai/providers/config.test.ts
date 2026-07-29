@@ -6,7 +6,7 @@ describe("selectAiProvider", () => {
     expect(
       selectAiProvider({
         NODE_ENV: "development",
-        OPENAI_MODEL: "configured",
+        GEMINI_MODEL: "configured",
       }),
     ).toEqual({
       disabledReason: "missing-api-key",
@@ -18,7 +18,7 @@ describe("selectAiProvider", () => {
     expect(
       selectAiProvider({
         NODE_ENV: "development",
-        OPENAI_API_KEY: "test-key",
+        GEMINI_API_KEY: "test-key",
       }),
     ).toEqual({
       disabledReason: "missing-model",
@@ -30,8 +30,8 @@ describe("selectAiProvider", () => {
     expect(
       selectAiProvider({
         NODE_ENV: "test",
-        OPENAI_API_KEY: "test-key",
-        OPENAI_MODEL: "configured",
+        GEMINI_API_KEY: "test-key",
+        GEMINI_MODEL: "configured",
       }),
     ).toEqual({
       disabledReason: "test-mode",

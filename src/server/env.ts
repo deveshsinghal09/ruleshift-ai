@@ -5,8 +5,8 @@ const serverEnvironmentSchema = z
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
-    OPENAI_API_KEY: z.string().trim().min(1).optional(),
-    OPENAI_MODEL: z.string().trim().min(1).max(120).optional(),
+    GEMINI_API_KEY: z.string().trim().min(1).optional(),
+    GEMINI_MODEL: z.string().trim().min(1).max(120).optional(),
   })
   .strict();
 
@@ -19,8 +19,8 @@ export function parseServerEnvironment(
 ): ServerEnvironment {
   return serverEnvironmentSchema.parse({
     NODE_ENV: source.NODE_ENV,
-    OPENAI_API_KEY: source.OPENAI_API_KEY?.trim() || undefined,
-    OPENAI_MODEL: source.OPENAI_MODEL?.trim() || undefined,
+    GEMINI_API_KEY: source.GEMINI_API_KEY?.trim() || undefined,
+    GEMINI_MODEL: source.GEMINI_MODEL?.trim() || undefined,
   });
 }
 

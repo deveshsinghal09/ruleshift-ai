@@ -33,7 +33,7 @@ export class AiPolicyError extends Error {
 const unsafeContentPatterns = [
   /\bignore (all |the |any )?(previous|prior|system|developer) instructions?\b/iu,
   /\b(system|developer) prompt\b/iu,
-  /\b(openai_api_key|process\.env|api[-_ ]?key|secret value)\b/iu,
+  /\b([a-z][a-z0-9_]*_api_key|process\.env|api[-_ ]?key|secret value)\b/iu,
   /\b(eval|exec|new function)\s*\(/iu,
   /<\s*script\b|javascript\s*:/iu,
   /\b(change|override|modify|replace)\b.{0,40}\b(schema|policy|instructions?)\b/iu,
