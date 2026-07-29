@@ -3,14 +3,29 @@ import { describe, expect, it } from "vitest";
 import HomePage from "@/app/page";
 
 describe("HomePage", () => {
-  it("renders the project identity and foundation status", () => {
+  it("moves visitors from the product promise to character creation", () => {
     render(<HomePage />);
 
     expect(
-      screen.getByRole("heading", { level: 1, name: "RuleShift AI" }),
+      screen.getByRole("heading", {
+        level: 1,
+        name: /the world is stable/i,
+      }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/strict, testable application foundation is ready/i),
+      screen.getByRole("link", { name: /start your adventure/i }),
+    ).toHaveAttribute("href", "/create");
+    expect(
+      screen.getByRole("heading", { name: /chaos has a contract/i }),
     ).toBeInTheDocument();
+  });
+
+  it("exposes an interactive changing-rule preview", () => {
+    render(<HomePage />);
+
+    expect(
+      screen.getByRole("button", { name: "Shift again" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Incorrectly Correct")).toBeInTheDocument();
   });
 });
