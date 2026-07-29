@@ -294,7 +294,7 @@ const eventAnnouncementSchema = z.object({
   type: z.literal("ruleshift-preview"),
 });
 
-const localGameEventSchema = z.object({
+export const localGameEventSchema = z.object({
   announcement: eventAnnouncementSchema.optional(),
   badge: z.string().trim().min(1).max(80),
   choices: z.array(gameActionSchema).min(2).max(4),

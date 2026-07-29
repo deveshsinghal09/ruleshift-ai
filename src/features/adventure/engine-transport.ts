@@ -5,6 +5,14 @@ import {
 } from "@/domain/game/engine";
 import { GameEngineError } from "@/domain/game/errors";
 import { localEventProvider } from "@/domain/game/local-event-provider";
+import { validateGameState } from "@/domain/game/schemas";
+import { AI_FALLBACK_MESSAGE } from "@/lib/ai-messages";
+import {
+  HttpAiEventClient,
+} from "@/features/adventure/ai-event-client";
+import type {
+  AiEventClient,
+} from "@/features/adventure/ai-event-client";
 import {
   clearCharacterDraft,
   loadGameSession,
@@ -18,6 +26,7 @@ import type {
 } from "@/features/adventure/types";
 
 interface LocalTransportOptions {
+  readonly aiEventClient?: AiEventClient | null;
   readonly delayMs?: number;
   readonly idFactory?: () => string;
   readonly seedFactory?: (
@@ -60,6 +69,12 @@ export function createLocalAdventureTransport(
     ((sessionId, passport) =>
       `${sessionId}:${passport.name}:${passport.difficulty}`);
   const pendingSessions = new Set<string>();
+  const aiEventClient =
+    options.aiEventClient === undefined
+      ? process.env.NODE_ENV === "test"
+        ? null
+        : new HttpAiEventClient()
+      : options.aiEventClient;
 
   async function pause(): Promise<void> {
     if (delayMs <= 0) {
@@ -131,8 +146,29 @@ export function createLocalAdventureTransport(
         const result = processTurn(latest, action, {
           eventProvider: localEventProvider,
         });
-        saveGameSession(result.state);
-        return result.state;
+        let nextState = result.state;
+        if (nextState.status === "playing" && aiEventClient) {
+          try {
+            const generated = await aiEventClient.generateNextEvent({
+              action,
+              state: nextState,
+            });
+            nextState = validateGameState({
+              ...nextState,
+              currentEvent: generated.event,
+            });
+          } catch {
+            nextState = validateGameState({
+              ...nextState,
+              currentEvent: {
+                ...nextState.currentEvent,
+                dmAside: `${AI_FALLBACK_MESSAGE} ${nextState.currentEvent.dmAside}`,
+              },
+            });
+          }
+        }
+        saveGameSession(nextState);
+        return nextState;
       } finally {
         pendingSessions.delete(sessionId);
       }

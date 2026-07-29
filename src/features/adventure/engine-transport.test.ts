@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { createLocalAdventureTransport } from "@/features/adventure/engine-transport";
+import { AI_FALLBACK_MESSAGE } from "@/lib/ai-messages";
+import { validEventFixture } from "@/server/ai/__fixtures__/responses";
+import { convertEventProposal } from "@/server/ai/policy";
+import type { AiEventClient } from "@/features/adventure/ai-event-client";
 import type { CharacterPassport } from "@/features/adventure/types";
 
 const passport: CharacterPassport = {
@@ -89,5 +93,55 @@ describe("local adventure transport", () => {
     const transport = createLocalAdventureTransport({ delayMs: 0 });
 
     await expect(transport.getSession("corrupted")).resolves.toBeNull();
+  });
+
+  it("installs a validated provider event only after deterministic turn resolution", async () => {
+    const aiEventClient: AiEventClient = {
+      async generateNextEvent({ state }) {
+        expect(state.turn).toBe(1);
+        expect(state.objectives[0]?.progress).toBe(20);
+        return {
+          event: convertEventProposal(validEventFixture, state),
+          source: "provider",
+          userMessage: null,
+        };
+      },
+    };
+    const transport = createLocalAdventureTransport({
+      aiEventClient,
+      delayMs: 0,
+      idFactory: () => "provider-demo",
+    });
+    const initial = await transport.createSession(passport);
+    const next = await transport.submitAction(initial.sessionId, {
+      actionId: "follow-bell",
+      requestId: "provider-request",
+    });
+
+    expect(next.turn).toBe(1);
+    expect(next.currentEvent.id).toBe("ai-event-1");
+    expect(next.player.energy).toBe(88);
+  });
+
+  it("keeps the deterministic event when the AI endpoint fails", async () => {
+    const aiEventClient: AiEventClient = {
+      generateNextEvent() {
+        return Promise.reject(new Error("network unavailable"));
+      },
+    };
+    const transport = createLocalAdventureTransport({
+      aiEventClient,
+      delayMs: 0,
+      idFactory: () => "fallback-demo",
+    });
+    const initial = await transport.createSession(passport);
+    const next = await transport.submitAction(initial.sessionId, {
+      actionId: "follow-bell",
+      requestId: "fallback-request",
+    });
+
+    expect(next.currentEvent.id).toBe("binary-examiner");
+    expect(next.currentEvent.dmAside).toContain(AI_FALLBACK_MESSAGE);
+    expect(next.turn).toBe(1);
   });
 });
