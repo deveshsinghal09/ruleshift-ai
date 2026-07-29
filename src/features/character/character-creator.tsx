@@ -23,7 +23,7 @@ import {
   mockGeneratedSuggestions,
   moods,
 } from "@/features/adventure/mock-data";
-import { createMockAdventureTransport } from "@/features/adventure/mock-transport";
+import { createLocalAdventureTransport } from "@/features/adventure/engine-transport";
 import { characterPassportSchema } from "@/features/adventure/schema";
 import {
   loadCharacterDraft,
@@ -33,7 +33,7 @@ import type {
   CharacterOption,
   CharacterPassport,
   Difficulty,
-  MockAdventureTransport,
+  AdventureTransport,
   MoodId,
 } from "@/features/adventure/types";
 import { cn } from "@/lib/utils";
@@ -55,7 +55,7 @@ const defaultPassport: CharacterPassport = {
 
 interface CharacterCreatorProps {
   onComplete?: (sessionId: string) => void;
-  transport?: MockAdventureTransport;
+  transport?: AdventureTransport;
 }
 
 function matchesCharacter(
@@ -75,7 +75,7 @@ export function CharacterCreator({
 }: CharacterCreatorProps) {
   const router = useRouter();
   const adventureTransport = useMemo(
-    () => transport ?? createMockAdventureTransport(),
+    () => transport ?? createLocalAdventureTransport(),
     [transport],
   );
   const [step, setStep] = useState(0);

@@ -33,18 +33,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { createMockAdventureTransport } from "@/features/adventure/mock-transport";
+import { createLocalAdventureTransport } from "@/features/adventure/engine-transport";
 import type {
+  AdventureTransport,
   CharacterPassport,
   Difficulty,
-  MockAdventureTransport,
 } from "@/features/adventure/types";
 import { TimelineList } from "@/features/game/game-panels";
-import { useMockGame } from "@/features/game/use-mock-game";
+import { useGame } from "@/features/game/use-game";
 
 interface ResultScreenProps {
   sessionId: string;
-  transport?: MockAdventureTransport;
+  transport?: AdventureTransport;
 }
 
 const harderDifficulty: Record<Difficulty, Difficulty> = {
@@ -56,10 +56,10 @@ const harderDifficulty: Record<Difficulty, Difficulty> = {
 export function ResultScreen({ sessionId, transport }: ResultScreenProps) {
   const router = useRouter();
   const adventureTransport = useMemo(
-    () => transport ?? createMockAdventureTransport(),
+    () => transport ?? createLocalAdventureTransport(),
     [transport],
   );
-  const { error, isLoading, state } = useMockGame(
+  const { error, isLoading, state } = useGame(
     sessionId,
     adventureTransport,
   );
@@ -116,7 +116,11 @@ export function ResultScreen({ sessionId, transport }: ResultScreenProps) {
   }
 
   const isVictory = state.status === "victory";
-  const rarestItem = state.inventory[0];
+  const rarestItem = state.player.inventory[0];
+  const passport: CharacterPassport = {
+    ...state.player.profile,
+    difficulty: state.difficulty,
+  };
 
   return (
     <PageBackground tone={isVictory ? "exploration" : "ruleshift"}>
@@ -142,7 +146,7 @@ export function ResultScreen({ sessionId, transport }: ResultScreenProps) {
               />
             )}
             <p className="mt-7 font-system text-xs text-muted-foreground">
-              {state.worldTitle.toUpperCase()}
+              {state.world.title.toUpperCase()}
             </p>
             <h1 className="mt-4 max-w-4xl font-display text-4xl font-semibold tracking-[-0.035em] sm:text-6xl">
               {isVictory
@@ -151,8 +155,8 @@ export function ResultScreen({ sessionId, transport }: ResultScreenProps) {
             </h1>
             <p className="mt-6 max-w-3xl text-lg leading-8 text-secondary-foreground">
               {isVictory
-                ? `${state.character.name} survived a hostile assessment, weaponized incorrect answers, and left the haunted campus with a legendary résumé and one suspiciously real future.`
-                : `${state.character.name} reached the edge of the objective before this timeline failed. The next attempt begins with everything learned.`}
+                ? `${state.player.profile.name} survived a hostile assessment and left the haunted campus with a legendary résumé and one suspiciously real future.`
+                : `${state.player.profile.name} reached the edge of the objective before this timeline failed. The next attempt begins with everything learned.`}
             </p>
           </div>
 
@@ -162,7 +166,8 @@ export function ResultScreen({ sessionId, transport }: ResultScreenProps) {
               {state.score}
             </p>
             <p className="mt-3 text-sm text-secondary-foreground">
-              {state.turnsTaken} turns · {state.rulesSurvived} rule survived
+              {state.statistics.turnsTaken} turns ·{" "}
+              {state.statistics.rulesSurvived} rules survived
             </p>
           </div>
         </section>
@@ -179,12 +184,12 @@ export function ResultScreen({ sessionId, transport }: ResultScreenProps) {
           <ResultMetric
             icon={Gauge}
             label="Turns"
-            value={String(state.turnsTaken)}
+            value={String(state.statistics.turnsTaken)}
           />
           <ResultMetric
             icon={Sparkles}
             label="Rules survived"
-            value={String(state.rulesSurvived)}
+            value={String(state.statistics.rulesSurvived)}
           />
           <ResultMetric
             icon={Star}
@@ -203,8 +208,8 @@ export function ResultScreen({ sessionId, transport }: ResultScreenProps) {
                 “{state.lastAction ?? "Entered the unknown"}”
               </CardTitle>
               <CardDescription>
-                The mock transport recorded the final resolved action as the
-                signature move of this session.
+                The deterministic engine recorded the final resolved action as
+                the signature move of this session.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -239,7 +244,7 @@ export function ResultScreen({ sessionId, transport }: ResultScreenProps) {
             </p>
           </div>
           <div className="rounded-lg border border-border bg-card p-5 sm:p-7">
-            <TimelineList events={state.timeline} />
+            <TimelineList events={state.history} />
           </div>
         </section>
 
@@ -255,19 +260,19 @@ export function ResultScreen({ sessionId, transport }: ResultScreenProps) {
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button
               loading={isRestarting}
-              onClick={() => void restart(state.character)}
+              onClick={() => void restart(passport)}
               variant="secondary"
             >
               <RefreshCw aria-hidden="true" className="size-4" />
               Play again
             </Button>
             <Button
-              disabled={state.character.difficulty === "hard"}
+              disabled={state.difficulty === "hard"}
               loading={isRestarting}
               onClick={() =>
                 void restart({
-                  ...state.character,
-                  difficulty: harderDifficulty[state.character.difficulty],
+                  ...passport,
+                  difficulty: harderDifficulty[state.difficulty],
                 })
               }
               variant="ruleshift"

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { createMockAdventureTransport } from "@/features/adventure/mock-transport";
+import { createLocalAdventureTransport } from "@/features/adventure/engine-transport";
 import type { CharacterPassport } from "@/features/adventure/types";
 
 const passport: CharacterPassport = {
@@ -10,45 +10,46 @@ const passport: CharacterPassport = {
   title: "the Placement Warrior",
 };
 
-describe("mock adventure transport", () => {
+describe("local adventure transport", () => {
   beforeEach(() => {
     window.localStorage.clear();
   });
 
-  it("resolves four connected turns without placing calculations in UI code", async () => {
-    const transport = createMockAdventureTransport({
+  it("runs four engine-owned turns to victory", async () => {
+    const transport = createLocalAdventureTransport({
       delayMs: 0,
       idFactory: () => "four-turn-demo",
+      seedFactory: () => "victory-seed",
     });
     const initial = await transport.createSession(passport);
 
-    expect(initial.turnIndex).toBe(0);
-    expect(initial.health).toBe(94);
+    expect(initial.turn).toBe(0);
+    expect(initial.player.health).toBe(94);
 
     const encounter = await transport.submitAction(initial.sessionId, {
       actionId: "follow-bell",
       requestId: "request-1",
     });
-    expect(encounter.turnIndex).toBe(1);
-    expect(encounter.energy).toBe(88);
+    expect(encounter.turn).toBe(1);
+    expect(encounter.player.energy).toBe(88);
 
-    const shifted = await transport.submitAction(initial.sessionId, {
+    const anomaly = await transport.submitAction(initial.sessionId, {
       actionId: "binary-search",
       requestId: "request-2",
     });
-    expect(shifted.showRuleShift).toBe(true);
-    expect(shifted.activeRule?.remainingTurns).toBe(3);
-    expect(shifted.health).toBe(88);
+    expect(anomaly.currentEvent.announcement?.type).toBe(
+      "ruleshift-preview",
+    );
+    expect(anomaly.player.health).toBeLessThan(initial.player.health);
 
     const rewarded = await transport.submitAction(initial.sessionId, {
       customAction: "Convince the rubric that semicolons are leadership.",
       requestId: "request-3",
     });
-    expect(rewarded.activeRule?.remainingTurns).toBe(2);
-    expect(rewarded.inventory[0]?.name).toBe(
+    expect(rewarded.player.inventory[0]?.name).toBe(
       "Résumé of Questionable Experience",
     );
-    expect(rewarded.timeline.some((event) => event.tone === "reward")).toBe(
+    expect(rewarded.history.some((event) => event.kind === "puzzle")).toBe(
       true,
     );
 
@@ -57,13 +58,12 @@ describe("mock adventure transport", () => {
       requestId: "request-4",
     });
     expect(result.status).toBe("victory");
-    expect(result.objectiveProgress).toBe(100);
-    expect(result.rulesSurvived).toBe(1);
-    expect(result.turnsTaken).toBe(4);
+    expect(result.objectives[0].progress).toBe(100);
+    expect(result.statistics.turnsTaken).toBe(4);
   });
 
-  it("returns the same state for a repeated request id", async () => {
-    const transport = createMockAdventureTransport({
+  it("rejects a repeated action id", async () => {
+    const transport = createLocalAdventureTransport({
       delayMs: 0,
       idFactory: () => "duplicate-demo",
     });
@@ -73,11 +73,12 @@ describe("mock adventure transport", () => {
       requestId: "same-request",
     };
 
-    const first = await transport.submitAction(initial.sessionId, request);
-    const duplicate = await transport.submitAction(initial.sessionId, request);
-
-    expect(duplicate.turnsTaken).toBe(first.turnsTaken);
-    expect(duplicate.score).toBe(first.score);
+    await transport.submitAction(initial.sessionId, request);
+    await expect(
+      transport.submitAction(initial.sessionId, request),
+    ).rejects.toMatchObject({
+      code: "DUPLICATE_ACTION",
+    });
   });
 
   it("rejects corrupted local session data instead of casting it", async () => {
@@ -85,7 +86,7 @@ describe("mock adventure transport", () => {
       "ruleshift.session.corrupted",
       JSON.stringify({ sessionId: "corrupted", health: "unlimited" }),
     );
-    const transport = createMockAdventureTransport({ delayMs: 0 });
+    const transport = createLocalAdventureTransport({ delayMs: 0 });
 
     await expect(transport.getSession("corrupted")).resolves.toBeNull();
   });

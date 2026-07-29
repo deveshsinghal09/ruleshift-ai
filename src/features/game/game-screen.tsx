@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { z } from "zod";
 import {
   Backpack,
   ChevronRight,
@@ -50,14 +49,13 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  demoTurns,
-  moodNarrativeCues,
-} from "@/features/adventure/mock-data";
+import { getActionEnergyCost } from "@/domain/game/difficulty";
+import { customActionTextSchema } from "@/domain/game/schemas";
+import type { LocalGameEvent } from "@/domain/game/types";
+import { moodNarrativeCues } from "@/features/adventure/mock-data";
 import type {
-  MockAdventureTransport,
-  MockGameState,
-  TurnScene,
+  AdventureTransport,
+  GameState,
 } from "@/features/adventure/types";
 import {
   DungeonMasterPanel,
@@ -68,21 +66,15 @@ import {
   RulePanel,
   TimelineList,
 } from "@/features/game/game-panels";
-import { useMockGame } from "@/features/game/use-mock-game";
+import { useGame } from "@/features/game/use-game";
 import { cn } from "@/lib/utils";
-
-const customActionSchema = z
-  .string()
-  .trim()
-  .min(3, "Describe an action using at least three characters.")
-  .max(300, "Keep the custom action under 300 characters.");
 
 type MobilePanel = "player" | "rule" | "timeline" | "inventory" | null;
 
 interface GameScreenProps {
   onComplete?: (sessionId: string) => void;
   sessionId: string;
-  transport?: MockAdventureTransport;
+  transport?: AdventureTransport;
 }
 
 export function GameScreen({
@@ -92,25 +84,32 @@ export function GameScreen({
 }: GameScreenProps) {
   const router = useRouter();
   const {
-    dismissRuleShift,
     error,
     isLoading,
     isSubmitting,
     state,
     submitAction,
-  } = useMockGame(sessionId, transport);
+  } = useGame(sessionId, transport);
   const [customAction, setCustomAction] = useState("");
   const [customError, setCustomError] = useState<string | null>(null);
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>(null);
+  const [dismissedAnnouncementId, setDismissedAnnouncementId] = useState<
+    string | null
+  >(null);
   const sceneHeadingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
-    if (state && state.turnsTaken > 0 && !state.showRuleShift) {
+    if (
+      state &&
+      state.turn > 0 &&
+      (!state.currentEvent.announcement ||
+        state.currentEvent.announcement.id === dismissedAnnouncementId)
+    ) {
       sceneHeadingRef.current?.focus();
     }
-  }, [state]);
+  }, [dismissedAnnouncementId, state]);
 
   async function resolveAction(request: {
     actionId?: string;
@@ -134,7 +133,7 @@ export function GameScreen({
     event: FormEvent<HTMLFormElement>,
   ): Promise<void> {
     event.preventDefault();
-    const result = customActionSchema.safeParse(customAction);
+    const result = customActionTextSchema.safeParse(customAction);
     if (!result.success) {
       setCustomError(result.error.issues[0]?.message ?? "Describe an action.");
       return;
@@ -171,7 +170,11 @@ export function GameScreen({
     );
   }
 
-  const scene = demoTurns[state.turnIndex];
+  const scene = state.currentEvent;
+  const announcement = scene.announcement;
+  const showAnnouncement =
+    announcement !== undefined &&
+    announcement.id !== dismissedAnnouncementId;
 
   return (
     <div className="min-h-screen bg-background pb-20 text-foreground lg:pb-0">
@@ -210,39 +213,49 @@ export function GameScreen({
                 </h2>
               </div>
               <span className="font-system text-xs text-muted-foreground">
-                {scene.actions.length} OPTIONS
+                {scene.choices.length} OPTIONS
               </span>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              {scene.actions.map((action) => (
-                <button
-                  className={cn(
-                    "group min-h-28 rounded-lg border border-border bg-card p-5 text-left outline-none transition-[border-color,background-color,transform]",
-                    "hover:-translate-y-0.5 hover:border-exploration/60 hover:bg-exploration/5",
-                    "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                    "disabled:pointer-events-none disabled:opacity-45",
-                  )}
-                  disabled={isSubmitting}
-                  key={action.id}
-                  onClick={() => void resolveAction({ actionId: action.id })}
-                  type="button"
-                >
-                  <span className="flex items-start justify-between gap-4">
-                    <span className="text-sm font-semibold leading-6">
-                      {action.label}
+              {scene.choices.map((action) => {
+                const energyCost = getActionEnergyCost(
+                  state.difficulty,
+                  action.energyCost,
+                );
+                return (
+                  <button
+                    className={cn(
+                      "group min-h-28 rounded-lg border border-border bg-card p-5 text-left outline-none transition-[border-color,background-color,transform]",
+                      "hover:-translate-y-0.5 hover:border-exploration/60 hover:bg-exploration/5",
+                      "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                      "disabled:pointer-events-none disabled:opacity-45",
+                    )}
+                    disabled={
+                      isSubmitting ||
+                      !action.available ||
+                      state.player.energy < energyCost
+                    }
+                    key={action.id}
+                    onClick={() => void resolveAction({ actionId: action.id })}
+                    type="button"
+                  >
+                    <span className="flex items-start justify-between gap-4">
+                      <span className="text-sm font-semibold leading-6">
+                        {action.label}
+                      </span>
+                      <ChevronRight
+                        aria-hidden="true"
+                        className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-exploration"
+                      />
                     </span>
-                    <ChevronRight
-                      aria-hidden="true"
-                      className="mt-1 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-exploration"
-                    />
-                  </span>
-                  <span className="mt-4 flex items-center justify-between gap-3 font-system text-[0.625rem] text-muted-foreground">
-                    <span>{action.risk.toUpperCase()} RISK</span>
-                    <span>−{action.energyCost} ENERGY</span>
-                  </span>
-                </button>
-              ))}
+                    <span className="mt-4 flex items-center justify-between gap-3 font-system text-[0.625rem] text-muted-foreground">
+                      <span>{action.risk.toUpperCase()} RISK</span>
+                      <span>−{energyCost} ENERGY</span>
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -257,8 +270,8 @@ export function GameScreen({
               </label>
             </div>
             <p className="mt-2 text-sm leading-6 text-secondary-foreground">
-              This demo interprets every custom action through the same safe,
-              scripted turn result.
+              Custom text is validated, then resolved through the same
+              deterministic engine as every prepared action.
             </p>
             <Textarea
               aria-describedby={customError ? "custom-action-error" : undefined}
@@ -305,7 +318,7 @@ export function GameScreen({
                 aria-hidden="true"
                 className="size-4 animate-pulse text-ai motion-reduce:animate-none"
               />
-              The Dungeon Master is resolving one safe scripted outcome…
+              The deterministic engine is resolving this turn…
             </div>
           ) : null}
 
@@ -330,7 +343,7 @@ export function GameScreen({
           <div
             className={cn(
               "rounded-lg bg-card p-5",
-              state.activeRule
+              state.currentEvent.announcement
                 ? "border border-ruleshift/45 shadow-[var(--shadow-ruleshift)]"
                 : "border border-border",
             )}
@@ -340,7 +353,7 @@ export function GameScreen({
           <div className="rounded-lg border border-ai/35 bg-ai/6 p-5">
             <DungeonMasterPanel
               aside={scene.dmAside}
-              mood={state.character.mood}
+              mood={state.player.profile.mood}
             />
           </div>
         </aside>
@@ -359,11 +372,11 @@ export function GameScreen({
             </Badge>
             <SheetTitle>Carried anomalies</SheetTitle>
             <SheetDescription>
-              Items collected during this local scripted adventure.
+              Items collected by deterministic engine effects.
             </SheetDescription>
           </SheetHeader>
           <div className="mt-7">
-            <InventoryList items={state.inventory} />
+            <InventoryList items={state.player.inventory} />
           </div>
         </SheetContent>
       </Sheet>
@@ -380,7 +393,7 @@ export function GameScreen({
             </SheetDescription>
           </SheetHeader>
           <div className="mt-7">
-            <TimelineList events={state.timeline} />
+            <TimelineList events={state.history} />
           </div>
         </SheetContent>
       </Sheet>
@@ -394,11 +407,11 @@ export function GameScreen({
 
       <Dialog
         onOpenChange={(open) => {
-          if (!open) {
-            void dismissRuleShift();
+          if (!open && announcement) {
+            setDismissedAnnouncementId(announcement.id);
           }
         }}
-        open={state.showRuleShift}
+        open={showAnnouncement}
       >
         <DialogContent className="border-ruleshift/60">
           <DialogHeader>
@@ -406,11 +419,11 @@ export function GameScreen({
               <Zap aria-hidden="true" className="size-3" />
               Reality rewrite
             </Badge>
-            <DialogTitle>Incorrectly Correct</DialogTitle>
+            <DialogTitle>{announcement?.name}</DialogTitle>
             <DialogDescription>
-              For three turns, incorrect answers damage enemies while correct
-              answers restore their confidence. Health, energy, score, and
-              victory remain deterministic.
+              {announcement?.description} Health, energy, score, inventory,
+              objectives, and outcomes remain controlled by the deterministic
+              engine.
             </DialogDescription>
           </DialogHeader>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -419,7 +432,7 @@ export function GameScreen({
                 BEFORE
               </p>
               <p className="mt-2 text-sm text-secondary-foreground line-through">
-                Correct answers deal damage.
+                RuleShift mechanics are not active in Phase 4.
               </p>
             </div>
             <div className="rounded-md border border-ruleshift/50 bg-ruleshift/8 p-4">
@@ -427,13 +440,18 @@ export function GameScreen({
                 AFTER
               </p>
               <p className="mt-2 text-sm font-semibold">
-                Wrong answers deal damage.
+                Narrative anomaly detected; deterministic rules remain active.
               </p>
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={() => void dismissRuleShift()} variant="ruleshift">
-              I understand the new rule
+            <Button
+              onClick={() =>
+                setDismissedAnnouncementId(announcement?.id ?? null)
+              }
+              variant="ruleshift"
+            >
+              Continue with deterministic rules
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -449,7 +467,7 @@ function GameHeader({
 }: {
   onInventory: () => void;
   onTimeline: () => void;
-  state: MockGameState;
+  state: GameState;
 }) {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95">
@@ -458,9 +476,11 @@ function GameHeader({
           <RuleShiftMark className="shrink-0" compact />
           <span aria-hidden="true" className="hidden h-6 w-px bg-border sm:block" />
           <div className="hidden min-w-0 sm:block">
-            <p className="truncate text-sm font-semibold">{state.worldTitle}</p>
+            <p className="truncate text-sm font-semibold">
+              {state.world.title}
+            </p>
             <p className="font-system text-[0.625rem] text-muted-foreground">
-              TURN {Math.min(state.turnIndex + 1, 4)} / 4 · SCORE {state.score}
+              TURN {Math.min(state.turn + 1, 4)} / 4 · SCORE {state.score}
             </p>
           </div>
         </div>
@@ -493,24 +513,31 @@ function ScenePanel({
   state,
 }: {
   headingRef: RefObject<HTMLHeadingElement | null>;
-  scene: TurnScene;
-  state: MockGameState;
+  scene: LocalGameEvent;
+  state: GameState;
 }) {
+  const encounter = scene.enemyId
+    ? state.enemies.find((enemy) => enemy.id === scene.enemyId)
+    : scene.npcId
+      ? state.npcs.find((npc) => npc.id === scene.npcId)
+      : undefined;
+  const encounterKind = scene.enemyId ? "enemy" : "npc";
+
   return (
     <article className="overflow-hidden rounded-lg border border-strong-border bg-card shadow-[var(--shadow-elevated)]">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-pressed px-5 py-3">
         <Badge
           variant={
-            scene.tone === "ruleshift"
+            scene.announcement
               ? "ruleshift"
-              : scene.tone === "reward"
+              : scene.kind === "reward"
                 ? "success"
-                : scene.tone === "encounter"
+                : scene.kind === "combat" || scene.kind === "trap"
                   ? "danger"
                   : "exploration"
           }
         >
-          {scene.tone === "encounter" ? (
+          {scene.kind === "combat" ? (
             <Swords aria-hidden="true" className="size-3" />
           ) : (
             <Sparkles aria-hidden="true" className="size-3" />
@@ -518,7 +545,7 @@ function ScenePanel({
           {scene.badge}
         </Badge>
         <span className="font-system text-[0.6875rem] text-muted-foreground">
-          SCENE {state.turnIndex + 1} / 4
+          SCENE {Math.min(state.turn + 1, 4)} / 4
         </span>
       </div>
 
@@ -535,22 +562,22 @@ function ScenePanel({
           {scene.narration}
         </p>
         <p className="mt-5 max-w-3xl rounded-md border border-ai/25 bg-ai/6 px-4 py-3 text-sm leading-6 text-secondary-foreground">
-          {moodNarrativeCues[state.character.mood]}
+          {moodNarrativeCues[state.player.profile.mood]}
         </p>
 
-        {scene.encounter ? (
+        {encounter ? (
           <div className="mt-7 grid gap-4 rounded-lg border border-border bg-pressed p-5 sm:grid-cols-[1fr_auto] sm:items-center">
             <div className="flex items-start gap-4">
               <span
                 aria-hidden="true"
                 className={cn(
                   "grid size-11 shrink-0 place-items-center rounded-md border",
-                  scene.encounter.kind === "enemy"
+                  encounterKind === "enemy"
                     ? "border-danger/45 bg-danger/10 text-danger"
                     : "border-ai/45 bg-ai/10 text-ai",
                 )}
               >
-                {scene.encounter.kind === "enemy" ? (
+                {encounterKind === "enemy" ? (
                   <ShieldAlert className="size-5" />
                 ) : (
                   <UserRound className="size-5" />
@@ -558,20 +585,22 @@ function ScenePanel({
               </span>
               <div>
                 <p className="font-system text-[0.625rem] text-muted-foreground">
-                  {scene.encounter.kind.toUpperCase()} SIGNAL
+                  {encounterKind.toUpperCase()} SIGNAL
                 </p>
                 <h2 className="mt-1 font-display text-base font-semibold">
-                  {scene.encounter.name}
+                  {encounter.name}
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-secondary-foreground">
-                  {scene.encounter.description}
+                  {encounter.description}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2 sm:pl-5">
               <Heart aria-hidden="true" className="size-4 text-danger" />
               <span className="font-system text-xs">
-                {scene.encounter.health} HP
+                {"health" in encounter
+                  ? `${encounter.health} / ${encounter.maxHealth} HP`
+                  : `${encounter.relationship} RELATIONSHIP`}
               </span>
             </div>
           </div>
@@ -586,7 +615,7 @@ function MobileCommandDock({
   state,
 }: {
   onOpen: (panel: MobilePanel) => void;
-  state: MockGameState;
+  state: GameState;
 }) {
   return (
     <nav
@@ -600,7 +629,7 @@ function MobileCommandDock({
       />
       <MobileDockButton
         icon={Zap}
-        label={state.activeRule ? "Rule active" : "Rule"}
+        label={state.currentEvent.announcement ? "Rule preview" : "Rule"}
         onClick={() => onOpen("rule")}
       />
       <MobileDockButton
@@ -646,8 +675,8 @@ function MobilePanelSheet({
 }: {
   onClose: () => void;
   panel: MobilePanel;
-  scene: TurnScene;
-  state: MockGameState;
+  scene: LocalGameEvent;
+  state: GameState;
 }) {
   return (
     <Sheet
@@ -684,15 +713,15 @@ function MobilePanelSheet({
               <RulePanel state={state} />
               <DungeonMasterPanel
                 aside={scene.dmAside}
-                mood={state.character.mood}
+                mood={state.player.profile.mood}
               />
             </div>
           ) : null}
           {panel === "inventory" ? (
-            <InventoryList items={state.inventory} />
+            <InventoryList items={state.player.inventory} />
           ) : null}
           {panel === "timeline" ? (
-            <TimelineList events={state.timeline} />
+            <TimelineList events={state.history} />
           ) : null}
         </div>
       </SheetContent>
@@ -716,7 +745,7 @@ function GameLoading() {
           Restoring the local adventure
         </p>
         <p className="mt-2 text-sm text-secondary-foreground">
-          Reconnecting the scripted reality cartridge…
+          Reconnecting the deterministic reality cartridge…
         </p>
       </div>
     </div>

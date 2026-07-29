@@ -1,12 +1,10 @@
 import type {
   CharacterOption,
   Difficulty,
-  InventoryItem,
   MoodId,
-  TurnScene,
 } from "@/features/adventure/types";
 
-export const demoCharacters: CharacterOption[] = [
+export const demoCharacters: readonly CharacterOption[] = [
   {
     archetype: "Placement Warrior",
     description:
@@ -33,7 +31,7 @@ export const demoCharacters: CharacterOption[] = [
   },
 ];
 
-export const mockGeneratedSuggestions: CharacterOption[] = [
+export const mockGeneratedSuggestions: readonly CharacterOption[] = [
   {
     archetype: "Deadline Chronomancer",
     description: "Can move any deadline except the one currently approaching.",
@@ -57,10 +55,10 @@ export const mockGeneratedSuggestions: CharacterOption[] = [
   },
 ];
 
-export const moods: Array<{
-  description: string;
-  id: MoodId;
-  label: string;
+export const moods: ReadonlyArray<{
+  readonly description: string;
+  readonly id: MoodId;
+  readonly label: string;
 }> = [
   {
     id: "fantasy",
@@ -112,10 +110,10 @@ export const moodNarrativeCues: Record<MoodId, string> = {
     "Sci-Fi lens: assessment drones scan the halls while tomorrow’s offer letter pings from orbit.",
 };
 
-export const difficultyOptions: Array<{
-  description: string;
-  internal: Difficulty;
-  label: string;
+export const difficultyOptions: ReadonlyArray<{
+  readonly description: string;
+  readonly internal: Difficulty;
+  readonly label: string;
 }> = [
   {
     internal: "easy",
@@ -138,164 +136,6 @@ export const difficultyLabels: Record<Difficulty, string> = {
   easy: "Relaxed",
   normal: "Unstable",
   hard: "Impossible",
-};
-
-export const demoTurns: TurnScene[] = [
-  {
-    actions: [
-      {
-        id: "follow-bell",
-        label: "Follow the bell into the archive",
-        energyCost: 8,
-        risk: "safe",
-      },
-      {
-        id: "question-map",
-        label: "Interrogate the campus map",
-        energyCost: 10,
-        risk: "bold",
-      },
-      {
-        id: "kick-door",
-        label: "Kick open the Faculty of Algorithms",
-        energyCost: 14,
-        risk: "wild",
-      },
-    ],
-    badge: "Exploration",
-    dmAside:
-      "The campus has scheduled your future for Room ∞. It did not include directions.",
-    id: "campus-gates",
-    narration:
-      "Rain falls upward across the Haunted Campus of Infinite Assessments. Every corridor ends at a placement test, and somewhere beyond the faculty tower waits the Golden Offer Letter.",
-    title: "The attendance bell rings for you",
-    tone: "exploration",
-  },
-  {
-    actions: [
-      {
-        id: "answer-zero",
-        label: "Answer: O(1), confidently and incorrectly",
-        energyCost: 10,
-        risk: "bold",
-      },
-      {
-        id: "binary-search",
-        label: "Binary-search the examiner’s patience",
-        energyCost: 12,
-        risk: "safe",
-      },
-      {
-        id: "ask-hint",
-        label: "Trade one résumé bullet for a hint",
-        energyCost: 7,
-        risk: "safe",
-      },
-      {
-        id: "invert-whiteboard",
-        label: "Turn the whiteboard upside down",
-        energyCost: 15,
-        risk: "wild",
-      },
-    ],
-    badge: "Enemy encounter",
-    dmAside:
-      "Incorrect answers are somehow hurting it. I definitely meant to configure that.",
-    encounter: {
-      description:
-        "A recursive invigilator that grows stronger whenever someone says “brute force.”",
-      health: 64,
-      kind: "enemy",
-      name: "The Infinite Examiner",
-    },
-    id: "binary-examiner",
-    narration:
-      "The Infinite Examiner unfolds from a whiteboard and demands the midpoint of an array with no end. Its rubric is alive, hostile, and surprisingly sensitive to wrong answers.",
-    title: "A binary-search challenge blocks the quad",
-    tone: "encounter",
-  },
-  {
-    actions: [
-      {
-        id: "weaponize-error",
-        label: "Weaponize a spectacularly wrong answer",
-        energyCost: 12,
-        risk: "bold",
-      },
-      {
-        id: "compliment-complexity",
-        label: "Compliment its asymptotic complexity",
-        energyCost: 8,
-        risk: "safe",
-      },
-      {
-        id: "submit-resume",
-        label: "Submit a résumé with twelve pages",
-        energyCost: 16,
-        risk: "wild",
-      },
-    ],
-    badge: "RuleShift active",
-    dmAside:
-      "Reality has inverted one tiny assumption. Try not to learn the wrong lesson.",
-    encounter: {
-      description:
-        "Its health bar now flinches whenever your answer would fail a basic screening.",
-      health: 28,
-      kind: "enemy",
-      name: "The Infinite Examiner",
-    },
-    id: "incorrect-damage",
-    narration:
-      "The campus compiler stutters. A magenta seam cuts through the exam hall: for three turns, incorrect answers damage enemies while correct answers restore their confidence.",
-    title: "RuleShift: Wrong answers become weapons",
-    tone: "ruleshift",
-  },
-  {
-    actions: [
-      {
-        id: "open-letter",
-        label: "Open the Golden Offer Letter",
-        energyCost: 8,
-        risk: "safe",
-      },
-      {
-        id: "negotiate-title",
-        label: "Negotiate for “Senior Chosen One”",
-        energyCost: 11,
-        risk: "bold",
-      },
-      {
-        id: "thank-examiner",
-        label: "Thank the examiner for the bug report",
-        energyCost: 6,
-        risk: "safe",
-      },
-    ],
-    badge: "Objective update",
-    dmAside:
-      "The letter is real. The compensation package appears to include dental and destiny.",
-    encounter: {
-      description:
-        "A campus spirit who has been trying to graduate since the first compiler.",
-      health: 100,
-      kind: "npc",
-      name: "The Dean of Deferred Dreams",
-    },
-    id: "golden-offer",
-    narration:
-      "The defeated examiner collapses into a single red pen. Behind it, the Dean of Deferred Dreams presents the Golden Offer Letter and a résumé no honest recruiter would believe.",
-    title: "The final interview has only one question",
-    tone: "reward",
-  },
-];
-
-export const resumeItem: InventoryItem = {
-  description:
-    "Once per adventure, adds six years of experience to a technology invented yesterday.",
-  id: "questionable-resume",
-  name: "Résumé of Questionable Experience",
-  rarity: "legendary",
 };
 
 export const previewRules = [

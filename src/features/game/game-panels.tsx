@@ -18,12 +18,12 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import type {
-  GameEvent,
+  GameHistoryEntry,
+  GameState,
   InventoryItem,
-  MockGameState,
 } from "@/features/adventure/types";
 
-export function PlayerPanel({ state }: { state: MockGameState }) {
+export function PlayerPanel({ state }: { state: GameState }) {
   return (
     <section aria-labelledby="player-panel-title" className="space-y-5">
       <div>
@@ -34,10 +34,10 @@ export function PlayerPanel({ state }: { state: MockGameState }) {
           className="mt-2 font-display text-lg font-semibold"
           id="player-panel-title"
         >
-          {state.character.name}
+          {state.player.profile.name}
         </h2>
         <p className="mt-1 text-sm text-secondary-foreground">
-          {state.character.title}
+          {state.player.profile.title}
         </p>
       </div>
 
@@ -45,14 +45,16 @@ export function PlayerPanel({ state }: { state: MockGameState }) {
         <StatBar
           icon={Heart}
           label="Health"
-          value={state.health}
-          variant={state.health <= 30 ? "danger" : "success"}
+          maximum={state.player.maxHealth}
+          value={state.player.health}
+          variant={state.player.health <= 30 ? "danger" : "success"}
         />
         <StatBar
           icon={Zap}
           label="Energy"
-          value={state.energy}
-          variant={state.energy <= 25 ? "warning" : "exploration"}
+          maximum={state.player.maxEnergy}
+          value={state.player.energy}
+          variant={state.player.energy <= 25 ? "warning" : "exploration"}
         />
       </div>
 
@@ -68,7 +70,7 @@ export function PlayerPanel({ state }: { state: MockGameState }) {
             TURN
           </p>
           <p className="mt-1 text-lg font-semibold">
-            {Math.min(state.turnIndex + 1, 4)} / 4
+            {Math.min(state.turn + 1, 4)} / 4
           </p>
         </div>
       </div>
@@ -79,9 +81,12 @@ export function PlayerPanel({ state }: { state: MockGameState }) {
         </p>
         <p className="mt-2 flex items-center gap-2 text-sm text-secondary-foreground">
           <Backpack aria-hidden="true" className="size-4" />
-          {state.inventory.length === 0
+          {state.player.inventory.length === 0
             ? "No items yet"
-            : `${state.inventory.length} legendary-looking item`}
+            : `${state.player.inventory.reduce(
+                (total, item) => total + item.quantity,
+                0,
+              )} carried item`}
         </p>
       </div>
     </section>
@@ -99,11 +104,13 @@ type ProgressVariant =
 function StatBar({
   icon: Icon,
   label,
+  maximum,
   value,
   variant,
 }: {
   icon: typeof Heart;
   label: string;
+  maximum: number;
   value: number;
   variant: ProgressVariant;
 }) {
@@ -115,20 +122,23 @@ function StatBar({
           {label}
         </span>
         <span className="font-system text-xs text-secondary-foreground">
-          {value} / 100
+          {value} / {maximum}
         </span>
       </div>
       <Progress
-        label={`${label}: ${value} of 100`}
-        value={value}
-        valueLabel={`${value} of 100`}
+        label={`${label}: ${value} of ${maximum}`}
+        value={(value / maximum) * 100}
+        valueLabel={`${value} of ${maximum}`}
         variant={variant}
       />
     </div>
   );
 }
 
-export function ObjectivePanel({ state }: { state: MockGameState }) {
+export function ObjectivePanel({ state }: { state: GameState }) {
+  const objective = state.objectives[0];
+  const progress = (objective.progress / objective.target) * 100;
+
   return (
     <section aria-labelledby="objective-title" className="space-y-4">
       <div className="flex items-start gap-3">
@@ -141,25 +151,26 @@ export function ObjectivePanel({ state }: { state: MockGameState }) {
             PRIMARY OBJECTIVE
           </p>
           <h2 className="mt-2 text-sm font-semibold" id="objective-title">
-            {state.objective}
+            {objective.title}
           </h2>
         </div>
       </div>
       <Progress
         label="Quest progress"
-        value={state.objectiveProgress}
-        valueLabel={`${state.objectiveProgress} percent complete`}
-        variant={state.objectiveProgress === 100 ? "success" : "warning"}
+        value={progress}
+        valueLabel={`${Math.round(progress)} percent complete`}
+        variant={objective.status === "completed" ? "success" : "warning"}
       />
       <p className="font-system text-[0.6875rem] text-muted-foreground">
-        {state.objectiveProgress}% COMPLETE
+        {Math.round(progress)}% COMPLETE
       </p>
     </section>
   );
 }
 
-export function RulePanel({ state }: { state: MockGameState }) {
-  if (!state.activeRule) {
+export function RulePanel({ state }: { state: GameState }) {
+  const announcement = state.currentEvent.announcement;
+  if (!announcement) {
     return (
       <section aria-labelledby="rule-panel-title">
         <p className="font-system text-[0.6875rem] text-muted-foreground">
@@ -169,7 +180,7 @@ export function RulePanel({ state }: { state: MockGameState }) {
           Reality is currently stable
         </h2>
         <p className="mt-2 text-sm leading-6 text-secondary-foreground">
-          The Dungeon Master is observing your decisions.
+          Phase 4 contains no active RuleShift mechanics.
         </p>
       </section>
     );
@@ -180,28 +191,26 @@ export function RulePanel({ state }: { state: MockGameState }) {
       <div className="flex items-center justify-between gap-3">
         <Badge variant="ruleshift">
           <Zap aria-hidden="true" className="size-3" />
-          Active RuleShift
+          RuleShift preview
         </Badge>
         <span className="font-system text-xs text-ruleshift">
-          {state.activeRule.remainingTurns} / {state.activeRule.totalTurns}
+          NARRATIVE ONLY
         </span>
       </div>
       <h2
         className="mt-4 font-display text-base font-semibold"
         id="rule-panel-title"
       >
-        {state.activeRule.name}
+        {announcement.name}
       </h2>
       <p className="mt-2 text-sm leading-6 text-secondary-foreground">
-        {state.activeRule.description}
+        {announcement.description}
       </p>
       <Progress
         className="mt-4"
-        label="RuleShift duration"
-        value={
-          (state.activeRule.remainingTurns / state.activeRule.totalTurns) * 100
-        }
-        valueLabel={`${state.activeRule.remainingTurns} turns remaining`}
+        label="RuleShift preview"
+        value={100}
+        valueLabel="No mechanics applied"
         variant="ruleshift"
       />
     </section>
@@ -228,13 +237,17 @@ export function DungeonMasterPanel({
       </div>
       <p className="text-sm leading-6 text-secondary-foreground">“{aside}”</p>
       <p className="font-system text-[0.625rem] text-muted-foreground">
-        MOOD: {mood.toUpperCase()} · SOURCE: SCRIPTED FALLBACK
+        MOOD: {mood.toUpperCase()} · SOURCE: LOCAL ENGINE
       </p>
     </section>
   );
 }
 
-export function InventoryList({ items }: { items: InventoryItem[] }) {
+export function InventoryList({
+  items,
+}: {
+  items: readonly InventoryItem[];
+}) {
   if (items.length === 0) {
     return (
       <div className="grid min-h-48 place-items-center rounded-lg border border-dashed border-strong-border bg-pressed p-6 text-center">
@@ -263,6 +276,9 @@ export function InventoryList({ items }: { items: InventoryItem[] }) {
             </div>
             <CardTitle>{item.name}</CardTitle>
             <CardDescription>{item.description}</CardDescription>
+            <p className="font-system text-[0.625rem] text-muted-foreground">
+              QUANTITY {item.quantity} · USES {item.usesRemaining}
+            </p>
           </CardHeader>
         </Card>
       ))}
@@ -270,7 +286,11 @@ export function InventoryList({ items }: { items: InventoryItem[] }) {
   );
 }
 
-export function TimelineList({ events }: { events: GameEvent[] }) {
+export function TimelineList({
+  events,
+}: {
+  events: readonly GameHistoryEntry[];
+}) {
   return (
     <ol className="space-y-0">
       {events.map((event, index) => (
@@ -288,7 +308,7 @@ export function TimelineList({ events }: { events: GameEvent[] }) {
             aria-hidden="true"
             className="relative z-10 grid size-9 place-items-center rounded-md border border-border bg-pressed"
           >
-            {event.tone === "objective" ? (
+            {event.kind === "reward" || event.kind === "quest" ? (
               <CheckCircle2 className="size-4 text-success" />
             ) : (
               <ScrollText className="size-4 text-exploration" />
@@ -309,8 +329,8 @@ export function TimelineList({ events }: { events: GameEvent[] }) {
   );
 }
 
-export function RewardSummary({ state }: { state: MockGameState }) {
-  if (state.inventory.length === 0) {
+export function RewardSummary({ state }: { state: GameState }) {
+  if (state.player.inventory.length === 0) {
     return null;
   }
 
@@ -320,7 +340,9 @@ export function RewardSummary({ state }: { state: MockGameState }) {
         <Star aria-hidden="true" className="size-5 shrink-0 text-warning" />
         <p className="text-sm">
           Collected{" "}
-          <span className="font-semibold">{state.inventory[0].name}</span>
+          <span className="font-semibold">
+            {state.player.inventory[0].name}
+          </span>
         </p>
       </CardContent>
     </Card>

@@ -1,11 +1,11 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createMockAdventureTransport } from "@/features/adventure/mock-transport";
+import { createLocalAdventureTransport } from "@/features/adventure/engine-transport";
 import type {
+  AdventureTransport,
   CharacterPassport,
-  MockAdventureTransport,
-  MockGameState,
+  GameState,
 } from "@/features/adventure/types";
 import { GameScreen } from "@/features/game/game-screen";
 
@@ -34,7 +34,7 @@ describe("GameScreen", () => {
     async () => {
       const user = userEvent.setup();
       const onComplete = vi.fn();
-      const transport = createMockAdventureTransport({
+      const transport = createLocalAdventureTransport({
         delayMs: 0,
         idFactory: () => "playable-flow",
       });
@@ -64,7 +64,7 @@ describe("GameScreen", () => {
         }),
       ).toHaveFocus();
       expect(
-        screen.getAllByText("MOOD: FUNNY · SOURCE: SCRIPTED FALLBACK").length,
+        screen.getAllByText("MOOD: FUNNY · SOURCE: LOCAL ENGINE").length,
       ).toBeGreaterThan(0);
       expect(
         screen.getByText(/Funny lens: the danger is real/i),
@@ -83,7 +83,9 @@ describe("GameScreen", () => {
         await screen.findByRole("dialog", { name: "Incorrectly Correct" }),
       ).toBeInTheDocument();
       await user.click(
-        screen.getByRole("button", { name: "I understand the new rule" }),
+        screen.getByRole("button", {
+          name: "Continue with deterministic rules",
+        }),
       );
 
       const customAction = screen.getByLabelText("Try a custom action");
@@ -109,7 +111,9 @@ describe("GameScreen", () => {
       expect(
         screen.getByRole("dialog", { name: "Adventure timeline" }),
       ).toBeInTheDocument();
-      expect(screen.getByText("Item collected")).toBeInTheDocument();
+      expect(
+        screen.getByText("The examiner failed its own assessment"),
+      ).toBeInTheDocument();
       await user.click(screen.getByRole("button", { name: "Close panel" }));
 
       await user.click(
@@ -124,7 +128,7 @@ describe("GameScreen", () => {
 
   it("opens player status from mobile navigation", async () => {
     const user = userEvent.setup();
-    const transport = createMockAdventureTransport({
+    const transport = createLocalAdventureTransport({
       delayMs: 0,
       idFactory: () => "mobile-flow",
     });
@@ -141,17 +145,17 @@ describe("GameScreen", () => {
   });
 
   it("prevents duplicate action submissions while a turn is pending", async () => {
-    const baseTransport = createMockAdventureTransport({
+    const baseTransport = createLocalAdventureTransport({
       delayMs: 0,
       idFactory: () => "pending-flow",
     });
     const session = await baseTransport.createSession(passport);
-    let resolveSubmission!: (state: MockGameState) => void;
-    const pendingSubmission = new Promise<MockGameState>((resolve) => {
+    let resolveSubmission!: (state: GameState) => void;
+    const pendingSubmission = new Promise<GameState>((resolve) => {
       resolveSubmission = resolve;
     });
     const submitAction = vi.fn(() => pendingSubmission);
-    const transport: MockAdventureTransport = {
+    const transport: AdventureTransport = {
       ...baseTransport,
       submitAction,
     };

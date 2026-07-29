@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createMockAdventureTransport } from "@/features/adventure/mock-transport";
+import { createLocalAdventureTransport } from "@/features/adventure/engine-transport";
 import type { CharacterPassport } from "@/features/adventure/types";
 import { ResultScreen } from "@/features/result/result-screen";
 
@@ -27,7 +27,7 @@ describe("ResultScreen", () => {
 
   it("shows the completed result, timeline, and local share placeholder", async () => {
     const user = userEvent.setup();
-    const transport = createMockAdventureTransport({
+    const transport = createLocalAdventureTransport({
       delayMs: 0,
       idFactory: () => "result-flow",
     });

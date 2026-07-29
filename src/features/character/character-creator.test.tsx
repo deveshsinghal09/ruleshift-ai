@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createMockAdventureTransport } from "@/features/adventure/mock-transport";
+import { createLocalAdventureTransport } from "@/features/adventure/engine-transport";
 import { CharacterCreator } from "@/features/character/character-creator";
 
 const pushMock = vi.fn();
@@ -59,7 +59,7 @@ describe("CharacterCreator", () => {
   it("creates a local session from the final passport", async () => {
     const user = userEvent.setup();
     const onComplete = vi.fn();
-    const transport = createMockAdventureTransport({
+    const transport = createLocalAdventureTransport({
       delayMs: 0,
       idFactory: () => "character-flow",
     });

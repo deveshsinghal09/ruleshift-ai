@@ -4,10 +4,11 @@ RuleShift AI is a browser-based adventure where an AI Dungeon Master can propose
 changes to the story, world, and rules while a deterministic game engine protects
 authoritative state.
 
-The repository currently contains the Phase 3 local playable frontend: the
-approved design system, character passport flow, four-turn scripted adventure,
-and result screen. The deterministic engine, real AI, database persistence,
-authentication, and deployment remain reserved for later approved phases.
+The repository currently contains the Phase 4 local playable frontend: the
+approved design system, character passport flow, deterministic TypeScript game
+engine, seeded local event provider, four-turn adventure, and result screen.
+RuleShift processing, real AI, database persistence, authentication, and
+deployment remain reserved for later approved phases.
 
 ## Requirements
 
@@ -44,7 +45,24 @@ Open `http://localhost:3000`.
 | `/design-system` | Component calibration gallery |
 
 Game sessions are stored in browser local storage and validated before they are
-restored. They are mock data, not database records.
+restored. They are local engine states, not database records.
+
+## Deterministic engine
+
+The pure domain layer lives in `src/domain/game`. It owns health, energy, score,
+inventory, enemy health, NPC relationships, world stability, objectives, turn
+progression, and outcomes.
+
+- `processTurn(state, action, context)` validates and resolves one immutable
+  state transition.
+- The RNG state is seeded and stored with each session. No gameplay calculation
+  uses uncontrolled randomness.
+- The local event provider supplies exploration, dialogue, combat, puzzle,
+  quest, reward, and trap events with validated choices.
+- React renders engine results and never calculates authoritative gameplay
+  values.
+- The Phase 3 RuleShift moment remains a narrative preview only. RuleShift
+  mechanics are intentionally deferred.
 
 ## Verification
 

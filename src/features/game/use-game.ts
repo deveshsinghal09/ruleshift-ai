@@ -1,33 +1,32 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createMockAdventureTransport } from "@/features/adventure/mock-transport";
+import { createLocalAdventureTransport } from "@/features/adventure/engine-transport";
 import type {
-  MockAdventureTransport,
-  MockGameState,
+  AdventureTransport,
+  GameState,
   SubmitActionRequest,
 } from "@/features/adventure/types";
 
-interface UseMockGameResult {
-  dismissRuleShift: () => Promise<void>;
-  error: string | null;
-  isLoading: boolean;
-  isSubmitting: boolean;
-  state: MockGameState | null;
-  submitAction: (
+interface UseGameResult {
+  readonly error: string | null;
+  readonly isLoading: boolean;
+  readonly isSubmitting: boolean;
+  readonly state: GameState | null;
+  readonly submitAction: (
     request: Omit<SubmitActionRequest, "requestId">,
-  ) => Promise<MockGameState | null>;
+  ) => Promise<GameState | null>;
 }
 
-export function useMockGame(
+export function useGame(
   sessionId: string,
-  providedTransport?: MockAdventureTransport,
-): UseMockGameResult {
+  providedTransport?: AdventureTransport,
+): UseGameResult {
   const transport = useMemo(
-    () => providedTransport ?? createMockAdventureTransport(),
+    () => providedTransport ?? createLocalAdventureTransport(),
     [providedTransport],
   );
-  const [state, setState] = useState<MockGameState | null>(null);
+  const [state, setState] = useState<GameState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +60,6 @@ export function useMockGame(
     }
 
     void restoreSession();
-
     return () => {
       isActive = false;
     };
@@ -70,7 +68,7 @@ export function useMockGame(
   const submitAction = useCallback(
     async (
       request: Omit<SubmitActionRequest, "requestId">,
-    ): Promise<MockGameState | null> => {
+    ): Promise<GameState | null> => {
       if (submittingRef.current) {
         return null;
       }
@@ -103,17 +101,7 @@ export function useMockGame(
     [sessionId, transport],
   );
 
-  const dismissRuleShift = useCallback(async (): Promise<void> => {
-    try {
-      const nextState = await transport.dismissRuleShift(sessionId);
-      setState(nextState);
-    } catch {
-      setError("The RuleShift notice could not be dismissed. Try again.");
-    }
-  }, [sessionId, transport]);
-
   return {
-    dismissRuleShift,
     error,
     isLoading,
     isSubmitting,

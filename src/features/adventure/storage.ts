@@ -1,10 +1,10 @@
 import {
   characterPassportSchema,
-  mockGameStateSchema,
 } from "@/features/adventure/schema";
+import { gameStateSchema } from "@/domain/game/schemas";
 import type {
   CharacterPassport,
-  MockGameState,
+  GameState,
 } from "@/features/adventure/types";
 
 const draftKey = "ruleshift.character-draft";
@@ -48,12 +48,12 @@ export function clearCharacterDraft(): void {
   }
 }
 
-export function loadMockSession(sessionId: string): MockGameState | null {
+export function loadGameSession(sessionId: string): GameState | null {
   if (typeof window === "undefined") {
     return null;
   }
 
-  const result = mockGameStateSchema.safeParse(
+  const result = gameStateSchema.safeParse(
     parseStoredValue(
       window.localStorage.getItem(`${sessionPrefix}${sessionId}`),
     ),
@@ -63,10 +63,10 @@ export function loadMockSession(sessionId: string): MockGameState | null {
     return null;
   }
 
-  return result.data;
+  return result.data as GameState;
 }
 
-export function saveMockSession(state: MockGameState): void {
+export function saveGameSession(state: GameState): void {
   if (typeof window !== "undefined") {
     window.localStorage.setItem(
       `${sessionPrefix}${state.sessionId}`,
