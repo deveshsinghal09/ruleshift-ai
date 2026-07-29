@@ -30,6 +30,20 @@ describe("parseServerEnvironment", () => {
     ).toEqual({ NODE_ENV: "development" });
   });
 
+  it("accepts PostgreSQL URLs and rejects unrelated protocols", () => {
+    expect(
+      parseServerEnvironment({
+        DATABASE_URL:
+          "postgresql://ruleshift:secret@localhost:5432/ruleshift_dev",
+      }).DATABASE_URL,
+    ).toContain("postgresql://");
+    expect(() =>
+      parseServerEnvironment({
+        DATABASE_URL: "https://database.example.com",
+      }),
+    ).toThrowError();
+  });
+
   it("rejects unsupported environment modes", () => {
     expect(() =>
       parseServerEnvironment({ NODE_ENV: "preview" }),

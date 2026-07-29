@@ -23,7 +23,7 @@ import {
   mockGeneratedSuggestions,
   moods,
 } from "@/features/adventure/mock-data";
-import { createLocalAdventureTransport } from "@/features/adventure/engine-transport";
+import { createHttpAdventureTransport } from "@/features/adventure/http-transport";
 import { characterPassportSchema } from "@/features/adventure/schema";
 import {
   loadCharacterDraft,
@@ -75,7 +75,7 @@ export function CharacterCreator({
 }: CharacterCreatorProps) {
   const router = useRouter();
   const adventureTransport = useMemo(
-    () => transport ?? createLocalAdventureTransport(),
+    () => transport ?? createHttpAdventureTransport(),
     [transport],
   );
   const [step, setStep] = useState(0);
@@ -178,7 +178,7 @@ export function CharacterCreator({
       }
     } catch {
       setError(
-        "The local adventure could not start. Review the passport and try again.",
+        "The adventure archive could not start. Review the passport and try again.",
       );
       setIsStarting(false);
     }

@@ -33,7 +33,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { createLocalAdventureTransport } from "@/features/adventure/engine-transport";
+import { createHttpAdventureTransport } from "@/features/adventure/http-transport";
 import type {
   AdventureTransport,
   CharacterPassport,
@@ -56,7 +56,7 @@ const harderDifficulty: Record<Difficulty, Difficulty> = {
 export function ResultScreen({ sessionId, transport }: ResultScreenProps) {
   const router = useRouter();
   const adventureTransport = useMemo(
-    () => transport ?? createLocalAdventureTransport(),
+    () => transport ?? createHttpAdventureTransport(),
     [transport],
   );
   const { error, isLoading, state } = useGame(
@@ -101,7 +101,7 @@ export function ResultScreen({ sessionId, transport }: ResultScreenProps) {
             <CardHeader>
               <CardTitle>Result unavailable</CardTitle>
               <CardDescription>
-                {error ?? "The local result could not be restored."}
+                {error ?? "The persisted result could not be restored."}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -239,8 +239,8 @@ export function ResultScreen({ sessionId, transport }: ResultScreenProps) {
               The complete timeline
             </h2>
             <p className="mt-3 text-sm leading-6 text-secondary-foreground">
-              Every event was produced by the local mock contract and persisted
-              with this session.
+              Every authoritative turn was validated by the game engine and
+              stored with before-and-after snapshots.
             </p>
           </div>
           <div className="rounded-lg border border-border bg-card p-5 sm:p-7">
@@ -296,8 +296,8 @@ export function ResultScreen({ sessionId, transport }: ResultScreenProps) {
             </Badge>
             <DialogTitle>Result links arrive in a later phase</DialogTitle>
             <DialogDescription>
-              This interface is intentionally local-only. It does not upload,
-              publish, or expose your session.
+              Sessions are private to this browser owner token. Public sharing
+              remains intentionally disabled.
             </DialogDescription>
           </DialogHeader>
           <div className="mt-5 space-y-2">
@@ -307,12 +307,12 @@ export function ResultScreen({ sessionId, transport }: ResultScreenProps) {
             <Input
               id="share-preview"
               readOnly
-              value={`ruleshift.local/result/${state.sessionId}`}
+              value={`/result/${state.sessionId}`}
             />
           </div>
           <DialogFooter>
             <Button onClick={() => setShareOpen(false)}>
-              Keep this result local
+              Keep this result private
               <ArrowRight aria-hidden="true" className="size-4" />
             </Button>
           </DialogFooter>

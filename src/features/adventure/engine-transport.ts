@@ -7,9 +7,6 @@ import { GameEngineError } from "@/domain/game/errors";
 import { localEventProvider } from "@/domain/game/local-event-provider";
 import { validateGameState } from "@/domain/game/schemas";
 import { AI_FALLBACK_MESSAGE } from "@/lib/ai-messages";
-import {
-  HttpAiEventClient,
-} from "@/features/adventure/ai-event-client";
 import type {
   AiEventClient,
 } from "@/features/adventure/ai-event-client";
@@ -69,12 +66,7 @@ export function createLocalAdventureTransport(
     ((sessionId, passport) =>
       `${sessionId}:${passport.name}:${passport.difficulty}`);
   const pendingSessions = new Set<string>();
-  const aiEventClient =
-    options.aiEventClient === undefined
-      ? process.env.NODE_ENV === "test"
-        ? null
-        : new HttpAiEventClient()
-      : options.aiEventClient;
+  const aiEventClient = options.aiEventClient ?? null;
 
   async function pause(): Promise<void> {
     if (delayMs <= 0) {

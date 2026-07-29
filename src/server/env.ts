@@ -7,6 +7,16 @@ const serverEnvironmentSchema = z
       .default("development"),
     GEMINI_API_KEY: z.string().trim().min(1).optional(),
     GEMINI_MODEL: z.string().trim().min(1).max(120).optional(),
+    DATABASE_URL: z
+      .string()
+      .trim()
+      .refine(
+        (value) =>
+          value.startsWith("postgresql://") ||
+          value.startsWith("postgres://"),
+        "DATABASE_URL must use the postgresql:// or postgres:// protocol.",
+      )
+      .optional(),
   })
   .strict();
 
@@ -21,6 +31,7 @@ export function parseServerEnvironment(
     NODE_ENV: source.NODE_ENV,
     GEMINI_API_KEY: source.GEMINI_API_KEY?.trim() || undefined,
     GEMINI_MODEL: source.GEMINI_MODEL?.trim() || undefined,
+    DATABASE_URL: source.DATABASE_URL?.trim() || undefined,
   });
 }
 
