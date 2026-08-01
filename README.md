@@ -15,16 +15,129 @@ The application uses Next.js App Router, strict TypeScript, Tailwind CSS,
 customized shadcn/ui primitives, PostgreSQL with Prisma, and a provider-neutral
 AI boundary currently implemented with Gemini.
 
-```text
-Browser UI → validated Next.js API → GameService transaction
-                                ├→ deterministic game + RuleShift engines
-                                ├→ validated Gemini proposal or local fallback
-                                └→ PostgreSQL snapshots and event history
-```
-
 Generated text is parsed, schema-validated, policy-checked, converted into
 bounded proposals, and then applied by registered deterministic behavior. No AI
 response is executed as code and no provider can directly set final state.
+
+### Production topology
+
+```mermaid
+flowchart LR
+    subgraph client ["Client"]
+        browser["Player browser"]
+    end
+    subgraph gateway ["Vercel edge"]
+        nextRoutes["Next.js routes"]
+    end
+    subgraph service ["Application runtime"]
+        gameApp["RuleShift AI service"]
+    end
+    subgraph datastore ["Persistent state"]
+        postgres["PostgreSQL"]
+    end
+    subgraph external ["Optional creative provider"]
+        gemini["Gemini API"]
+    end
+
+    browser -->|"HTTPS"| nextRoutes
+    nextRoutes -->|"Validated commands"| gameApp
+    gameApp -->|"Atomic sessions"| postgres
+    gameApp -.->|"Gemini: structured proposals"| gemini
+```
+
+### Authoritative turn processing
+
+```mermaid
+sequenceDiagram
+    title One authoritative player turn
+    participant Browser
+    participant RouteHandler
+    participant GameService
+    participant Engines
+    participant AIDirector
+    participant PostgreSQL
+
+    Browser->>RouteHandler: POST action and expected version
+    RouteHandler->>RouteHandler: Validate origin, body, and owner
+    RouteHandler->>GameService: Authenticated command
+    GameService->>PostgreSQL: Load session or idempotent replay
+    PostgreSQL-->>GameService: Owned session snapshot
+    GameService->>Engines: Resolve deterministic preview
+    GameService->>AIDirector: Request structured event
+    AIDirector-->>GameService: Validated event or fallback
+    GameService->>Engines: Apply approved event and rules
+    GameService->>PostgreSQL: Commit snapshots and replay record
+    PostgreSQL-->>GameService: Committed state version
+    GameService-->>RouteHandler: Validated next state
+    RouteHandler-->>Browser: Safe response
+```
+
+### Session lifecycle
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> Playing
+    Playing --> Playing: valid turn
+    Playing --> Victory: objective and reward complete
+    Playing --> Defeat: terminal condition reached
+    Playing --> Abandoned: owner abandons
+    Victory --> [*]
+    Defeat --> [*]
+    Abandoned --> [*]
+```
+
+### Persistence model
+
+```mermaid
+erDiagram
+    direction LR
+    GAME_SESSION ||--o{ GAME_EVENT : records
+    GAME_SESSION ||--o{ ACTIVE_RULE : activates
+    GAME_SESSION ||--o{ INVENTORY_ITEM : contains
+    GAME_SESSION ||--o{ NPC_STATE : tracks
+    GAME_SESSION ||--o{ TURN_REQUEST : deduplicates
+
+    GAME_SESSION {
+        uuid id PK
+        string ownerTokenHash
+        string status
+        int stateVersion
+        int currentTurn
+        json currentSnapshot
+    }
+    GAME_EVENT {
+        uuid id PK
+        uuid sessionId FK
+        int turn
+        json beforeStateSnapshot
+        json afterStateSnapshot
+    }
+    ACTIVE_RULE {
+        uuid id PK
+        uuid sessionId FK
+        string ruleKey
+        int remainingTurns
+    }
+    INVENTORY_ITEM {
+        uuid id PK
+        uuid sessionId FK
+        string itemId
+        int quantity
+    }
+    NPC_STATE {
+        uuid id PK
+        uuid sessionId FK
+        string npcId
+        int relationship
+    }
+    TURN_REQUEST {
+        uuid id PK
+        uuid sessionId FK
+        string idempotencyKey
+        int resultingVersion
+    }
+```
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for trust boundaries, request flows,
 ownership, persistence, and deployment topology.
