@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 interface RuleShiftMarkProps {
@@ -14,12 +14,17 @@ export function RuleShiftMark({
     <span
       className={cn("inline-flex items-center gap-2.5 text-foreground", className)}
     >
-      <span
+      <Image
+        alt=""
         aria-hidden="true"
-        className="relative grid size-9 place-items-center rounded-md border border-ruleshift/55 bg-card shadow-[3px_3px_0_rgb(34_211_238_/_35%)]"
-      >
-        <Sparkles className="size-4 text-ruleshift" />
-      </span>
+        className={cn(
+          "h-9 w-auto shrink-0 select-none object-contain drop-shadow-[0_3px_4px_rgb(34_211_238_/_24%)]",
+          compact && "h-7",
+        )}
+        height={210}
+        src="/ruleshift-logo.png"
+        width={331}
+      />
       <span
         className={cn(
           "font-display font-semibold tracking-[-0.025em]",
