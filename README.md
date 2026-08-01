@@ -1,13 +1,41 @@
-# RuleShift AI
+<div align="center">
 
-RuleShift AI is a browser-based adventure where an AI Dungeon Master proposes
-worlds, narration, choices, and temporary rule changes while a deterministic
-TypeScript engine remains authoritative over health, energy, damage, score,
-inventory, objectives, rule duration, and outcomes.
+<h1>RuleShift AI</h1>
 
-The MVP is a polished single-player experience built for a short hackathon demo.
-It remains fully playable when Gemini is missing, unavailable, rate-limited, or
-returns invalid output.
+<h3>Every turn changes the story. Sometimes it changes the rules.</h3>
+
+<p>
+  A cinematic browser adventure where an AI Dungeon Master invents worlds,
+  characters, choices, and temporary reality shifts while a deterministic
+  engine keeps every consequence fair, reproducible, and safe.
+</p>
+
+<p>
+  <img alt="Next.js 16" src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&amp;logoColor=white">
+  <img alt="React 19" src="https://img.shields.io/badge/React-19-149ECA?logo=react&amp;logoColor=white">
+  <img alt="TypeScript 6" src="https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&amp;logoColor=white">
+  <img alt="Tailwind CSS 4" src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&amp;logoColor=white">
+  <img alt="Prisma 7" src="https://img.shields.io/badge/Prisma-7-2D3748?logo=prisma&amp;logoColor=white">
+  <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql&amp;logoColor=white">
+  <img alt="Gemini" src="https://img.shields.io/badge/AI-Gemini-8E75B2?logo=googlegemini&amp;logoColor=white">
+  <img alt="Vitest" src="https://img.shields.io/badge/Tests-Vitest-6E9F18?logo=vitest&amp;logoColor=white">
+  <img alt="Playwright" src="https://img.shields.io/badge/E2E-Playwright-2EAD33?logo=playwright&amp;logoColor=white">
+  <img alt="Vercel" src="https://img.shields.io/badge/Deploy-Vercel-000000?logo=vercel&amp;logoColor=white">
+</p>
+
+<p><strong>Deterministic gameplay | Registered RuleShifts | Structured AI | Atomic saves | Accessible play | Offline fallback</strong></p>
+
+</div>
+
+> [!IMPORTANT]
+> Gemini proposes creative content, but it never directly controls health,
+> damage, energy, score, inventory quantities, rule execution, victory, or
+> defeat. RuleShift AI remains fully playable when the provider is missing,
+> unavailable, rate-limited, or returns invalid output.
+
+The MVP is a polished single-player hackathon experience. Its strict TypeScript
+engine is the sole authority over gameplay, while AI output passes schema,
+policy, registry, and bounded-effect validation before it can influence a turn.
 
 ## Architecture
 
