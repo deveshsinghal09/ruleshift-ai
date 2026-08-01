@@ -4,7 +4,7 @@ RuleShift AI is a browser-based adventure where an AI Dungeon Master can propose
 changes to the story, world, and rules while a deterministic game engine protects
 authoritative state.
 
-The repository currently contains the Phase 7 MVP foundation: the approved
+The repository currently contains the Phase 8 MVP quality foundation: the approved
 design system, deterministic game and RuleShift engines, provider-neutral Gemini
 AI direction with deterministic fallback, and PostgreSQL-backed private game
 sessions.
@@ -95,20 +95,16 @@ and the response replay record.
 
 ## Verification
 
-Run the complete quality suite:
+Run the complete quality suite, including PostgreSQL and browser layers:
 
 ```powershell
-npm run typecheck
-npm run lint
-npm test
-npm run build
+npm run quality
 ```
 
 Database integration tests run separately and only against the explicitly
-configured development/test database:
+configured test database:
 
 ```powershell
-$env:TEST_DATABASE_URL = $env:DATABASE_URL
 npm run db:test
 ```
 
@@ -122,6 +118,13 @@ npm run db:test
 | `npm run lint` | Run ESLint with zero warnings allowed |
 | `npm run typecheck` | Run strict TypeScript validation |
 | `npm test` | Run the Vitest suite once |
+| `npm run test:unit` | Run deterministic domain and utility tests |
+| `npm run test:components` | Run React component and UI-flow tests |
+| `npm run test:contracts` | Run AI, environment, and HTTP contract tests |
+| `npm run test:integration` | Run service, transport, and PostgreSQL integration tests |
+| `npm run test:e2e` | Run Chromium desktop, mobile, keyboard, and provider-mode flows |
+| `npm run test:all` | Run every test layer and the production browser build |
+| `npm run quality` | Run strict types, lint, and the complete test suite |
 | `npm run test:watch` | Run Vitest in watch mode |
 | `npm run db:validate` | Validate the Prisma schema without connecting |
 | `npm run db:generate` | Generate the Prisma client |
@@ -131,9 +134,13 @@ npm run db:test
 ## Environment variables
 
 - `DATABASE_URL` — server-only development PostgreSQL connection.
-- `TEST_DATABASE_URL` — optional isolated PostgreSQL connection used by
-  `npm run db:test`; falls back to `DATABASE_URL`.
+- `TEST_DATABASE_URL` — required isolated PostgreSQL connection used only by
+  database and browser tests; it never falls back to `DATABASE_URL`.
 - `GEMINI_API_KEY` and `GEMINI_MODEL` — optional server-only AI configuration.
+- `AI_PROVIDER_MODE` — `gemini`, deterministic `fallback`, or local `mock`.
+
+Detailed isolation, browser setup, test-layer, and CI guidance lives in
+[`TESTING.md`](./TESTING.md).
 
 `.env.example` contains names only. Credentials must be configured in
 `.env.local` and must never be committed.

@@ -71,4 +71,15 @@ describe("HttpAdventureTransport", () => {
     const transport = new HttpAdventureTransport();
     await expect(transport.getSession("missing")).resolves.toBeNull();
   });
+
+  it("converts a network failure into a themed recoverable error", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<typeof fetch>().mockRejectedValue(new TypeError("Failed to fetch")),
+    );
+    const transport = new HttpAdventureTransport();
+    await expect(transport.getSession("offline-session")).rejects.toThrow(
+      "The adventure archive could not be reached.",
+    );
+  });
 });

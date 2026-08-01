@@ -9,18 +9,19 @@ try {
   console.error(error instanceof Error ? error.message : "Invalid test database configuration.");
   process.exit(1);
 }
-process.env.TEST_DATABASE_URL = databaseUrl;
-process.env.DATABASE_URL = databaseUrl;
 
-const vitestCli = fileURLToPath(
-  new URL("../node_modules/vitest/vitest.mjs", import.meta.url),
+const prismaCli = fileURLToPath(
+  new URL("../node_modules/prisma/build/index.js", import.meta.url),
 );
 const result = spawnSync(
   process.execPath,
-  [vitestCli, "run", "--config", "vitest.database.config.ts"],
-  { env: process.env, stdio: "inherit" },
+  [prismaCli, "migrate", "deploy"],
+  {
+    env: { ...process.env, DATABASE_URL: databaseUrl },
+    stdio: "inherit",
+  },
 );
 if (result.error) {
-  console.error("Unable to start the database test runner.");
+  console.error("Unable to start the Prisma test migration.");
 }
 process.exit(result.status ?? 1);

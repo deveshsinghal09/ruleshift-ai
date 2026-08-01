@@ -13,6 +13,7 @@ describe("Gemini live smoke", () => {
     { timeout: 30_000 },
     async () => {
       const environment = parseServerEnvironment({
+        AI_PROVIDER_MODE: "gemini",
         GEMINI_API_KEY: process.env.GEMINI_API_KEY,
         GEMINI_MODEL: process.env.GEMINI_MODEL,
         NODE_ENV: "development",

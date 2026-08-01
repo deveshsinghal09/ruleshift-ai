@@ -4,6 +4,7 @@ import { parseServerEnvironment } from "@/server/env";
 describe("parseServerEnvironment", () => {
   it("uses a safe development default when NODE_ENV is absent", () => {
     expect(parseServerEnvironment({})).toEqual({
+      AI_PROVIDER_MODE: "gemini",
       NODE_ENV: "development",
     });
   });
@@ -15,6 +16,7 @@ describe("parseServerEnvironment", () => {
         GEMINI_MODEL: "configured-model",
       }),
     ).toEqual({
+      AI_PROVIDER_MODE: "gemini",
       NODE_ENV: "development",
       GEMINI_API_KEY: "test-key",
       GEMINI_MODEL: "configured-model",
@@ -27,7 +29,10 @@ describe("parseServerEnvironment", () => {
         GEMINI_API_KEY: "",
         GEMINI_MODEL: " ",
       }),
-    ).toEqual({ NODE_ENV: "development" });
+    ).toEqual({
+      AI_PROVIDER_MODE: "gemini",
+      NODE_ENV: "development",
+    });
   });
 
   it("accepts PostgreSQL URLs and rejects unrelated protocols", () => {
@@ -47,6 +52,16 @@ describe("parseServerEnvironment", () => {
   it("rejects unsupported environment modes", () => {
     expect(() =>
       parseServerEnvironment({ NODE_ENV: "preview" }),
+    ).toThrowError();
+  });
+
+  it("accepts only registered provider modes", () => {
+    expect(
+      parseServerEnvironment({ AI_PROVIDER_MODE: "fallback" })
+        .AI_PROVIDER_MODE,
+    ).toBe("fallback");
+    expect(() =>
+      parseServerEnvironment({ AI_PROVIDER_MODE: "live-ish" }),
     ).toThrowError();
   });
 });

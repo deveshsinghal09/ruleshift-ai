@@ -1,6 +1,6 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { PrismaClient } from "@/generated/prisma/client";
+import { Prisma, PrismaClient } from "@/generated/prisma/client";
 import { hardenPostgresSslMode } from "@/server/db/connection";
 import { AiDirector } from "@/server/ai/director";
 import { hashOwnerToken } from "@/server/auth/owner-token";
@@ -8,12 +8,10 @@ import { GameService } from "@/server/game/service";
 import { persistedSessionSchema } from "@/server/game/schemas";
 import { PrismaGameSessionRepository } from "@/server/repositories/prisma-game-repository";
 
-const databaseUrl =
-  process.env.TEST_DATABASE_URL?.trim() ??
-  process.env.DATABASE_URL?.trim();
+const databaseUrl = process.env.TEST_DATABASE_URL?.trim();
 if (!databaseUrl) {
   throw new Error(
-    "Set TEST_DATABASE_URL or DATABASE_URL to an explicitly identified test/development PostgreSQL database before running npm run db:test.",
+    "Set TEST_DATABASE_URL to an explicitly identified isolated PostgreSQL test database before running npm run db:test.",
   );
 }
 const parsedUrl = new URL(databaseUrl);
@@ -135,5 +133,33 @@ describe("Prisma PostgreSQL persistence", () => {
     const restored = await repository.findOwned(sessionId, ownerHash);
     expect(restored?.stateVersion).toBe(2);
     expect(restored?.state.turn).toBe(1);
+  });
+
+  it("rejects a corrupted persisted snapshot instead of resuming it", async () => {
+    const original = await prisma.gameSession.findUniqueOrThrow({
+      select: { currentSnapshot: true },
+      where: { id: sessionId },
+    });
+    try {
+      await prisma.gameSession.update({
+        data: {
+          currentSnapshot: {
+            player: { health: "unbounded" },
+            sessionId,
+          },
+        },
+        where: { id: sessionId },
+      });
+      await expect(
+        repository.findOwned(sessionId, ownerHash),
+      ).rejects.toThrow();
+    } finally {
+      await prisma.gameSession.update({
+        data: {
+          currentSnapshot: original.currentSnapshot as Prisma.InputJsonValue,
+        },
+        where: { id: sessionId },
+      });
+    }
   });
 });

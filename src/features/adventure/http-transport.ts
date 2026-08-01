@@ -25,6 +25,17 @@ const errorEnvelopeSchema = z
   })
   .strict();
 
+async function requestAdventure(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<Response> {
+  try {
+    return await fetch(input, init);
+  } catch {
+    throw new Error("The adventure archive could not be reached.");
+  }
+}
+
 async function readSessionResponse(
   response: Response,
 ): Promise<z.infer<typeof sessionEnvelopeSchema>> {
@@ -44,7 +55,7 @@ export class HttpAdventureTransport implements AdventureTransport {
   private readonly stateVersions = new Map<string, number>();
 
   async createSession(passport: CharacterPassport): Promise<GameState> {
-    const response = await fetch("/api/sessions", {
+    const response = await requestAdventure("/api/sessions", {
       body: JSON.stringify({ passport }),
       credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
@@ -60,7 +71,7 @@ export class HttpAdventureTransport implements AdventureTransport {
   }
 
   async getSession(sessionId: string): Promise<GameState | null> {
-    const response = await fetch(
+    const response = await requestAdventure(
       `/api/sessions/${encodeURIComponent(sessionId)}`,
       { credentials: "same-origin" },
     );
@@ -88,7 +99,7 @@ export class HttpAdventureTransport implements AdventureTransport {
       throw new Error("The adventure state version is unavailable.");
     }
 
-    const response = await fetch(
+    const response = await requestAdventure(
       `/api/sessions/${encodeURIComponent(sessionId)}/actions`,
       {
         body: JSON.stringify({

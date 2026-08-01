@@ -5,6 +5,10 @@
   "engines": {
     "node": ">=20.19.0"
   },
+  "overrides": {
+    "postcss": "$postcss",
+    "sharp": "^0.35.0"
+  },
   "scripts": {
     "postinstall": "prisma generate",
     "dev": "next dev",
@@ -13,10 +17,19 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:unit": "vitest run src/domain src/lib src/hooks",
+    "test:components": "vitest run src/app src/components src/features/character src/features/game src/features/result",
+    "test:contracts": "vitest run src/server/ai src/server/env.test.ts src/server/http src/features/adventure/http-transport.test.ts",
+    "test:integration": "vitest run src/features/adventure src/server/game tests/configuration && npm run db:test",
+    "pretest:e2e": "node scripts/run-test-migration.mjs && npm run build",
+    "test:e2e": "node scripts/run-playwright-tests.mjs",
+    "test:all": "npm test && npm run db:test && npm run test:e2e",
+    "quality": "npm run typecheck && npm run lint && npm run test:all",
     "test:watch": "vitest",
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
     "db:migrate:dev": "node scripts/run-safe-migration.mjs",
+    "db:migrate:test": "node scripts/run-test-migration.mjs",
     "db:test": "node scripts/run-database-tests.mjs"
   },
   "dependencies": {
@@ -42,6 +55,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^7.0.0",
