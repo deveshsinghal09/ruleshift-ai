@@ -33,7 +33,7 @@ export function FirstTurnGuide({
     >
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border bg-ai/7 px-5 py-4">
         <div>
-          <div className="flex items-center gap-2 text-ai">
+          <div className="flex items-center gap-2 text-[#c4b5fd]">
             <ShieldCheck aria-hidden="true" className="size-4" />
             <p className="font-system text-[0.6875rem] font-semibold">
               FIRST-TURN BRIEFING
