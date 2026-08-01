@@ -20,6 +20,7 @@
   <img alt="Gemini" src="https://img.shields.io/badge/AI-Gemini-8E75B2?logo=googlegemini&amp;logoColor=white">
   <img alt="Vitest" src="https://img.shields.io/badge/Tests-Vitest-6E9F18?logo=vitest&amp;logoColor=white">
   <img alt="Playwright" src="https://img.shields.io/badge/E2E-Playwright-2EAD33?logo=playwright&amp;logoColor=white">
+  <a href="./LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/License-MIT-22c55e"></a>
   <a href="https://ruleshift-ai.vercel.app"><img alt="Live on Vercel" src="https://img.shields.io/badge/Deploy-Live-000000?logo=vercel&amp;logoColor=white"></a>
 </p>
 
@@ -411,3 +412,8 @@ RuleShift engines continue the session. Database persistence remains required.
   mode is the reliability baseline.
 - The MVP does not include authentication, multiplayer, analytics, billing,
   automated database backups, or a custom domain.
+
+## License
+
+RuleShift AI is available under the [MIT License](./LICENSE). Copyright (c)
+2026 Devesh Singhal.

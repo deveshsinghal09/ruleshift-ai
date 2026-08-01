@@ -3,6 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 interface ProjectPackage {
+  license?: string;
   private?: boolean;
   scripts?: Record<string, string>;
 }
@@ -33,6 +34,7 @@ describe("project configuration", () => {
   it("provides the required lifecycle scripts", () => {
     const projectPackage = readJsonFile<ProjectPackage>("package.json");
 
+    expect(projectPackage.license).toBe("MIT");
     expect(projectPackage.private).toBe(true);
     expect(projectPackage.scripts).toMatchObject({
       build: "next build",
