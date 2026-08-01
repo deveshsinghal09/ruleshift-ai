@@ -1,6 +1,6 @@
 # RuleShift AI testing
 
-Phase 8 uses deterministic, isolated layers rather than live production
+The project uses deterministic, isolated layers rather than live production
 services. Vitest covers pure domain behavior, React components, AI contracts,
 HTTP/application services, and PostgreSQL repositories. Playwright exercises
 the production build through the public UI and APIs.
@@ -17,6 +17,11 @@ No AI credential is required. Browser tests launch separate servers with
 `AI_PROVIDER_MODE=fallback` and `AI_PROVIDER_MODE=mock`; both are local and make
 no provider requests. The real Gemini smoke test remains opt-in and is excluded
 from the quality gate.
+
+When a development key and model are configured securely in `.env.local` and
+an external request is explicitly authorized, run `npm run test:ai:live`. The
+test makes one bounded provider event request, validates it, and completes the
+session through the deterministic fallback without printing provider content.
 
 Install the browser once:
 
@@ -44,5 +49,13 @@ clean run is repeatable.
 ## CI
 
 `.github/workflows/quality.yml` provisions an ephemeral PostgreSQL service,
-installs locked dependencies and Chromium, then runs `npm run quality`. It has
-read-only repository permissions and performs no deployment.
+installs locked dependencies, and runs explicit type, lint, unit, component,
+contract, integration, and production-build steps. A dependent browser job uses
+a fresh PostgreSQL service and Chromium for the complete fallback/mock, mobile,
+keyboard, accessibility, and responsive suite. It has read-only repository
+permissions, retains failure diagnostics for seven days, prints no environment
+values, and performs no deployment.
+
+The opt-in Gemini live smoke is not part of CI and must never use a production
+credential. Run it only after local mock/fallback tests pass and external
+provider contact is explicitly authorized.

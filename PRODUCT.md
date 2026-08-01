@@ -75,3 +75,18 @@ fabricated.
 The experience must support semantic HTML, keyboard navigation, visible focus,
 sufficient contrast, screen-reader status announcements, non-color indicators,
 reduced motion, and full playability without audio or hover interaction.
+
+## Production Readiness
+
+- GitHub Actions must reproduce strict types, lint, unit, component, contract,
+  integration, production-build, and browser checks with disposable services.
+- Deployments use explicitly scoped server-only environment variables and never
+  run migrations as a side effect of building the application.
+- Database migrations require an identified target, a recovery point, staging
+  verification, and exact database-name confirmation.
+- Health reporting exposes dependency status only; logs never include secrets,
+  ownership tokens, prompts, player text, provider responses, or state snapshots.
+- Deterministic fallback is the baseline operating mode and the immediate AI
+  rollback path.
+- Publishing, billing, paid infrastructure, production migrations, and DNS
+  changes always require explicit operator approval.

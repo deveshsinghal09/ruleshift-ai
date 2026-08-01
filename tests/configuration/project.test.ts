@@ -24,13 +24,36 @@ describe("project configuration", () => {
 
     expect(projectPackage.private).toBe(true);
     expect(projectPackage.scripts).toMatchObject({
-      dev: "next dev",
       build: "next build",
-      start: "next start",
+      "db:migrate:deploy": "node scripts/run-deploy-migration.mjs",
+      dev: "next dev",
       lint: "eslint . --max-warnings=0",
-      typecheck: "tsc --noEmit",
+      smoke: "node scripts/run-production-smoke.mjs",
+      start: "next start",
       test: "vitest run",
+      typecheck: "tsc --noEmit",
     });
+  });
+
+  it("keeps CI read-only, isolated, and explicit", () => {
+    const workflow = readFileSync(
+      path.join(process.cwd(), ".github/workflows/quality.yml"),
+      "utf8",
+    );
+
+    expect(workflow).toContain("contents: read");
+    expect(workflow).toContain("image: postgres:17-alpine");
+    expect(workflow).toContain("AI_PROVIDER_MODE: fallback");
+    expect(workflow).toContain("run: npm ci");
+    expect(workflow).toContain("run: npm run typecheck");
+    expect(workflow).toContain("run: npm run lint");
+    expect(workflow).toContain("run: npm run test:unit");
+    expect(workflow).toContain("run: npm run test:components");
+    expect(workflow).toContain("run: npm run test:contracts");
+    expect(workflow).toContain("run: npm run test:integration");
+    expect(workflow).toContain("run: npm run build");
+    expect(workflow).toContain("run: npm run test:e2e");
+    expect(workflow).not.toMatch(/vercel|deploy-production|GEMINI_API_KEY/u);
   });
 
   it("keeps strict TypeScript enabled", () => {

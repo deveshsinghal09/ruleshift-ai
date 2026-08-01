@@ -35,6 +35,14 @@ test.afterEach(async ({ context }) => cleanOwnedSessions(context));
 test("landing, creation, game panels, rules, and result pass axe", async ({
   page,
 }) => {
+  const browserErrors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      browserErrors.push(message.text());
+    }
+  });
+  page.on("pageerror", (error) => browserErrors.push(error.name));
+
   await page.goto("/");
   await expectAccessible(page, "landing page");
 
@@ -56,7 +64,10 @@ test("landing, creation, game panels, rules, and result pass axe", async ({
   await page.getByRole("button", { name: "Continue with deterministic rules" }).click();
   await expectAccessible(page, "active rules game state");
 
-  await page.getByRole("button", { name: "Weaponize a spectacularly wrong answer" }).click();
+  await page
+    .getByLabel("Try a custom action")
+    .fill("Convince the rubric that recursion is a soft skill.");
+  await page.getByRole("button", { name: "Resolve custom action" }).click();
   await page.getByRole("button", { name: "Open the Golden Offer Letter" }).click();
   await expect(page).toHaveURL(/\/result\/[0-9a-f-]+$/u);
   await expectAccessible(page, "result page");
@@ -68,6 +79,9 @@ test("landing, creation, game panels, rules, and result pass axe", async ({
     .poll(() => image.evaluate((element) => (element as HTMLImageElement).naturalWidth))
     .toBe(1200);
   await expectAccessible(page, "result image dialog");
+  expect(browserErrors, "the production journey should not emit browser errors").toEqual(
+    [],
+  );
 });
 
 test("core layouts remain usable from 375px through 1440px", async ({ page }) => {

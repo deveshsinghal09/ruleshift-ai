@@ -179,3 +179,15 @@ software-keyboard area without changing the story or action order.
   volume preferences persist locally, while every cue remains non-essential.
 - Reduced-motion mode removes page, narration, dialog, drawer, stat, and item
   movement while preserving immediate high-contrast state changes.
+
+## Production presentation guarantees
+
+- Loading, database-unavailable, provider-fallback, victory, and defeat states
+  retain the same branded console language and never expose infrastructure
+  details.
+- Responsive acceptance widths are 375, 640, 768, 1024, and 1440 pixels with
+  no horizontal overflow or reliance on hover.
+- Result imagery contains only UI-safe persisted summary data and never includes
+  ownership tokens, provider diagnostics, or secrets.
+- Operational health endpoints return data rather than presentation and are not
+  linked as player-facing dashboard surfaces.

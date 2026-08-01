@@ -19,7 +19,8 @@
     "test": "vitest run",
     "test:unit": "vitest run src/domain src/lib src/hooks",
     "test:components": "vitest run src/app src/components src/features/character src/features/game src/features/result",
-    "test:contracts": "vitest run src/server/ai src/server/env.test.ts src/server/http src/features/adventure/http-transport.test.ts",
+    "test:contracts": "vitest run src/server/ai src/server/env.test.ts src/server/health.test.ts src/server/http src/features/adventure/http-transport.test.ts",
+    "test:ai:live": "node scripts/run-gemini-smoke.mjs",
     "test:integration": "vitest run src/features/adventure src/server/game tests/configuration && npm run db:test",
     "pretest:e2e": "node scripts/run-test-migration.mjs && npm run build",
     "test:e2e": "node scripts/run-playwright-tests.mjs",
@@ -29,8 +30,10 @@
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
     "db:migrate:dev": "node scripts/run-safe-migration.mjs",
+    "db:migrate:deploy": "node scripts/run-deploy-migration.mjs",
     "db:migrate:test": "node scripts/run-test-migration.mjs",
-    "db:test": "node scripts/run-database-tests.mjs"
+    "db:test": "node scripts/run-database-tests.mjs",
+    "smoke": "node scripts/run-production-smoke.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.13.0",

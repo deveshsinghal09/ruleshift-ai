@@ -3,6 +3,20 @@ import { cleanOwnedSessions, expect, test } from "../fixtures";
 
 test.afterEach(async ({ context }) => cleanOwnedSessions(context));
 
+test("health endpoint reports database and fallback readiness", async ({
+  page,
+}) => {
+  const response = await page.request.get("/api/health");
+  expect(response.status()).toBe(200);
+  expect(await response.json()).toEqual({
+    dependencies: {
+      database: "available",
+      deterministicFallback: "ready",
+    },
+    status: "ok",
+  });
+});
+
 test("live action API replays idempotency keys and rejects stale versions", async ({
   page,
 }) => {
