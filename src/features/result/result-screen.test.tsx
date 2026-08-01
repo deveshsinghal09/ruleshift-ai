@@ -25,7 +25,7 @@ describe("ResultScreen", () => {
     pushMock.mockClear();
   });
 
-  it("shows the completed result, timeline, and private share placeholder", async () => {
+  it("shows the completed result, timeline, and private result image", async () => {
     const user = userEvent.setup();
     const transport = createLocalAdventureTransport({
       delayMs: 0,
@@ -68,11 +68,20 @@ describe("ResultScreen", () => {
     await user.click(screen.getByRole("button", { name: "Share result" }));
     expect(
       screen.getByRole("dialog", {
-        name: "Result links arrive in a later phase",
+        name: "Your shareable adventure image",
       }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText("Future share link")).toHaveValue(
-      "/result/result-flow",
+    expect(
+      screen.getByRole("img", {
+        name: "RuleShift AI victory result card for Devesh",
+      }),
+    ).toHaveAttribute(
+      "src",
+      expect.stringContaining("/api/sessions/result-flow/result/image"),
+    );
+    expect(screen.getByRole("link", { name: "Open image" })).toHaveAttribute(
+      "href",
+      "/api/sessions/result-flow/result/image",
     );
   });
 });

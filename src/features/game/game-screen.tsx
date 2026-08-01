@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   Backpack,
   ChevronRight,
@@ -24,6 +25,8 @@ import {
   type RefObject,
 } from "react";
 import { RuleShiftMark } from "@/components/brand/ruleshift-mark";
+import { AudioControls } from "@/components/audio/audio-controls";
+import { useAudio } from "@/components/audio/audio-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -68,6 +71,8 @@ import {
   TimelineList,
 } from "@/features/game/game-panels";
 import { useGame } from "@/features/game/use-game";
+import { useReducedMotionPreference } from "@/hooks/use-reduced-motion-preference";
+import { getMotionTransition } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 type MobilePanel = "player" | "rule" | "timeline" | "inventory" | null;
@@ -100,6 +105,8 @@ export function GameScreen({
     string | null
   >(null);
   const sceneHeadingRef = useRef<HTMLHeadingElement>(null);
+  const reduceMotion = useReducedMotionPreference();
+  const { playCue } = useAudio();
 
   useEffect(() => {
     if (
@@ -116,11 +123,40 @@ export function GameScreen({
     actionId?: string;
     customAction?: string;
   }): Promise<void> {
-    if (isSubmitting) {
+    if (isSubmitting || !state) {
       return;
     }
 
+    const previousState = state;
+    playCue("action");
     const nextState = await submitAction(request);
+    if (nextState) {
+      const previousItems = previousState.player.inventory.reduce(
+        (total, item) => total + item.quantity,
+        0,
+      );
+      const nextItems = nextState.player.inventory.reduce(
+        (total, item) => total + item.quantity,
+        0,
+      );
+      const activatedRule = nextState.activeRules.some(
+        (rule) =>
+          !previousState.activeRules.some(
+            (previousRule) => previousRule.id === rule.id,
+          ),
+      );
+      if (nextState.status === "victory") {
+        playCue("victory");
+      } else if (nextState.status === "defeat") {
+        playCue("defeat");
+      } else if (activatedRule) {
+        playCue("ruleshift");
+      } else if (nextItems > previousItems) {
+        playCue("item");
+      } else if (nextState.player.health < previousState.player.health) {
+        playCue("damage");
+      }
+    }
     if (nextState && nextState.status !== "playing") {
       if (onComplete) {
         onComplete(nextState.sessionId);
@@ -151,7 +187,11 @@ export function GameScreen({
 
   if (!state) {
     return (
-      <div className="grid min-h-screen place-items-center bg-background px-4">
+      <main
+        className="grid min-h-screen place-items-center bg-background px-4"
+        id="main-content"
+        tabIndex={-1}
+      >
         <Card className="w-full max-w-lg" variant="danger">
           <CardHeader>
             <CircleAlert aria-hidden="true" className="size-7 text-danger" />
@@ -167,7 +207,7 @@ export function GameScreen({
             </Button>
           </CardContent>
         </Card>
-      </div>
+      </main>
     );
   }
 
@@ -182,14 +222,16 @@ export function GameScreen({
     announcement.id !== dismissedAnnouncementId;
 
   return (
-    <div className="min-h-screen bg-background pb-20 text-foreground lg:pb-0">
+    <div className="game-shell min-h-screen bg-background pb-20 text-foreground lg:pb-0">
       <GameHeader
         onInventory={() => setInventoryOpen(true)}
         onTimeline={() => setTimelineOpen(true)}
         state={state}
       />
 
-      <main className="mx-auto grid w-full max-w-[100rem] gap-5 px-4 py-5 sm:px-6 lg:grid-cols-[15.5rem_minmax(0,1fr)_18rem] lg:gap-6 lg:px-8 lg:py-7">
+      <GameAnnouncements state={state} />
+
+      <main className="mx-auto grid w-full max-w-[100rem] gap-5 px-4 py-5 sm:px-6 lg:grid-cols-[15.5rem_minmax(0,1fr)_18rem] lg:gap-6 lg:px-8 lg:py-7" id="main-content" tabIndex={-1}>
         <aside className="hidden lg:block">
           <div className="sticky top-24 rounded-lg border border-border bg-card p-5">
             <PlayerPanel state={state} />
@@ -197,11 +239,21 @@ export function GameScreen({
         </aside>
 
         <section aria-labelledby="scene-title" className="min-w-0 space-y-5">
-          <ScenePanel
-            headingRef={sceneHeadingRef}
-            scene={scene}
-            state={state}
-          />
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            initial={{
+              opacity: reduceMotion ? 1 : 0.76,
+              y: reduceMotion ? 0 : 8,
+            }}
+            key={scene.id}
+            transition={getMotionTransition("deliberate", reduceMotion)}
+          >
+            <ScenePanel
+              headingRef={sceneHeadingRef}
+              scene={scene}
+              state={state}
+            />
+          </motion.div>
           <RewardSummary state={state} />
 
           <div aria-labelledby="actions-title">
@@ -240,20 +292,23 @@ export function GameScreen({
                     : undefined);
                 return (
                   <button
+                    aria-describedby={
+                      unavailableReason ? `${action.id}-reason` : undefined
+                    }
+                    aria-disabled={Boolean(unavailableReason) || undefined}
                     className={cn(
                       "group min-h-28 rounded-lg border border-border bg-card p-5 text-left outline-none transition-[border-color,background-color,transform]",
                       "hover:-translate-y-0.5 hover:border-exploration/60 hover:bg-exploration/5",
                       "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                      "disabled:pointer-events-none disabled:opacity-45",
+                      "disabled:pointer-events-none disabled:opacity-45 aria-disabled:cursor-not-allowed aria-disabled:opacity-50",
                     )}
-                    disabled={
-                      isSubmitting ||
-                      !action.available ||
-                      !ruleAvailability.available ||
-                      state.player.energy < energyCost
-                    }
+                    disabled={isSubmitting}
                     key={action.id}
-                    onClick={() => void resolveAction({ actionId: action.id })}
+                    onClick={() => {
+                      if (!unavailableReason) {
+                        void resolveAction({ actionId: action.id });
+                      }
+                    }}
                     title={unavailableReason}
                     type="button"
                   >
@@ -271,8 +326,11 @@ export function GameScreen({
                       <span>−{energyCost} ENERGY</span>
                     </span>
                     {unavailableReason ? (
-                      <span className="mt-2 block text-xs leading-5 text-danger">
-                        {unavailableReason}
+                      <span
+                        className="mt-2 block text-xs leading-5 text-danger"
+                        id={`${action.id}-reason`}
+                      >
+                        Unavailable: {unavailableReason}
                       </span>
                     ) : null}
                   </button>
@@ -405,12 +463,17 @@ export function GameScreen({
       </main>
 
       <MobileCommandDock
+        onStory={() => {
+          setMobilePanel(null);
+          sceneHeadingRef.current?.scrollIntoView({ block: "start" });
+          sceneHeadingRef.current?.focus();
+        }}
         onOpen={setMobilePanel}
         state={state}
       />
 
       <Sheet onOpenChange={setInventoryOpen} open={inventoryOpen}>
-        <SheetContent side="right">
+        <SheetContent side="responsive">
           <SheetHeader>
             <Badge className="w-fit" variant="success">
               Inventory
@@ -427,12 +490,12 @@ export function GameScreen({
       </Sheet>
 
       <Sheet onOpenChange={setTimelineOpen} open={timelineOpen}>
-        <SheetContent side="right">
+        <SheetContent side="responsive">
           <SheetHeader>
             <Badge className="w-fit" variant="exploration">
-              Timeline
+              History
             </Badge>
-            <SheetTitle>Adventure events</SheetTitle>
+            <SheetTitle>Adventure history</SheetTitle>
             <SheetDescription>
               Every resolved turn and deterministic reward in this session.
             </SheetDescription>
@@ -473,7 +536,7 @@ export function GameScreen({
           </DialogHeader>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <div className="rounded-md border border-border bg-pressed p-4">
-              <p className="font-system text-[0.625rem] text-muted-foreground">
+              <p className="font-system text-[0.6875rem] font-semibold text-secondary-foreground">
                 BEFORE
               </p>
               <p className="mt-2 text-sm text-secondary-foreground line-through">
@@ -481,7 +544,7 @@ export function GameScreen({
               </p>
             </div>
             <div className="rounded-md border border-ruleshift/50 bg-ruleshift/8 p-4">
-              <p className="font-system text-[0.625rem] text-ruleshift">
+              <p className="font-system text-[0.6875rem] font-semibold text-[#fda4af]">
                 AFTER
               </p>
               <p className="mt-2 text-sm font-semibold">
@@ -491,7 +554,7 @@ export function GameScreen({
             </div>
           </div>
           {announcedRule ? (
-            <p className="mt-4 font-system text-xs text-ruleshift">
+            <p className="mt-4 font-system text-xs font-semibold text-[#fda4af]">
               {announcedRule.remainingTurns} OF {announcedRule.totalTurns} TURNS
               REMAIN
             </p>
@@ -546,13 +609,14 @@ function GameHeader({
             <Backpack aria-hidden="true" className="size-5" />
           </Button>
           <Button
-            aria-label="Open timeline"
+            aria-label="Open adventure history"
             onClick={onTimeline}
             size="icon"
             variant="ghost"
           >
             <Clock3 aria-hidden="true" className="size-5" />
           </Button>
+          <AudioControls />
         </div>
       </div>
     </header>
@@ -662,18 +726,105 @@ function ScenePanel({
   );
 }
 
+function GameAnnouncements({ state }: { state: GameState }) {
+  const previousStateRef = useRef(state);
+  const [politeMessage, setPoliteMessage] = useState("");
+  const [urgentMessage, setUrgentMessage] = useState("");
+
+  useEffect(() => {
+    const previous = previousStateRef.current;
+    if (previous === state) {
+      return;
+    }
+
+    const polite: string[] = [];
+    const urgent: string[] = [];
+    const healthChange = state.player.health - previous.player.health;
+    const energyChange = state.player.energy - previous.player.energy;
+
+    if (healthChange < 0) {
+      urgent.push(
+        `Health decreased by ${Math.abs(healthChange)} to ${state.player.health}.`,
+      );
+    } else if (healthChange > 0) {
+      polite.push(
+        `Health increased by ${healthChange} to ${state.player.health}.`,
+      );
+    }
+
+    if (energyChange !== 0) {
+      polite.push(
+        `Energy ${energyChange > 0 ? "increased" : "decreased"} by ${Math.abs(energyChange)} to ${state.player.energy}.`,
+      );
+    }
+
+    if (state.currentEvent.id !== previous.currentEvent.id) {
+      polite.push(
+        `New narration: ${state.currentEvent.title}. ${state.currentEvent.narration}`,
+      );
+    }
+
+    const previousRuleIds = new Set(
+      previous.ruleEvents.map((event) => event.id),
+    );
+    const newRuleEvent = state.ruleEvents.find(
+      (event) => !previousRuleIds.has(event.id),
+    );
+    if (newRuleEvent) {
+      urgent.push(
+        newRuleEvent.type === "activated"
+          ? `RuleShift activated: ${newRuleEvent.ruleName}.`
+          : `Rule ${newRuleEvent.type}: ${newRuleEvent.ruleName}.`,
+      );
+    }
+
+    const previousItems = new Map(
+      previous.player.inventory.map((item) => [item.id, item.quantity]),
+    );
+    const gainedItem = state.player.inventory.find(
+      (item) => item.quantity > (previousItems.get(item.id) ?? 0),
+    );
+    if (gainedItem) {
+      polite.push(`${gainedItem.name} added to inventory.`);
+    }
+
+    setPoliteMessage(polite.join(" "));
+    setUrgentMessage(urgent.join(" "));
+    previousStateRef.current = state;
+  }, [state]);
+
+  return (
+    <>
+      <p aria-atomic="true" aria-live="polite" className="sr-only">
+        {politeMessage}
+      </p>
+      <p aria-atomic="true" aria-live="assertive" className="sr-only">
+        {urgentMessage}
+      </p>
+    </>
+  );
+}
+
 function MobileCommandDock({
   onOpen,
+  onStory,
   state,
 }: {
   onOpen: (panel: MobilePanel) => void;
+  onStory: () => void;
   state: GameState;
 }) {
   return (
     <nav
       aria-label="Mobile game navigation"
-      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-strong-border bg-background p-1 lg:hidden"
+      className="game-mobile-dock fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-strong-border bg-background p-1 transition-transform duration-150 lg:hidden motion-reduce:transition-none"
     >
+      <MobileDockButton
+        current
+        icon={ScrollText}
+        label="Story"
+        onClick={onStory}
+      />
       <MobileDockButton
         icon={UserRound}
         label="Player"
@@ -690,12 +841,12 @@ function MobileCommandDock({
       />
       <MobileDockButton
         icon={Backpack}
-        label="Items"
+        label="Inventory"
         onClick={() => onOpen("inventory")}
       />
       <MobileDockButton
-        icon={ScrollText}
-        label="Timeline"
+        icon={Clock3}
+        label="History"
         onClick={() => onOpen("timeline")}
       />
     </nav>
@@ -703,17 +854,20 @@ function MobileCommandDock({
 }
 
 function MobileDockButton({
+  current = false,
   icon: Icon,
   label,
   onClick,
 }: {
+  current?: boolean;
   icon: typeof Menu;
   label: string;
   onClick: () => void;
 }) {
   return (
     <button
-      className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-md text-[0.6875rem] font-semibold text-secondary-foreground outline-none hover:bg-white/7 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+      aria-current={current ? "page" : undefined}
+      className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-md px-1 text-[0.625rem] font-semibold text-secondary-foreground outline-none hover:bg-white/7 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring sm:text-[0.6875rem]"
       onClick={onClick}
       type="button"
     >
@@ -743,7 +897,7 @@ function MobilePanelSheet({
       }}
       open={panel !== null}
     >
-      <SheetContent side="bottom">
+      <SheetContent side="responsive">
         <SheetHeader>
           <Badge className="w-fit" variant="ai">
             Mobile console
@@ -755,7 +909,7 @@ function MobilePanelSheet({
                 ? "Rule and objective"
                 : panel === "inventory"
                   ? "Inventory"
-                  : "Adventure timeline"}
+                  : "Adventure history"}
           </SheetTitle>
           <SheetDescription>
             Quick access without leaving the active story turn.
@@ -787,10 +941,12 @@ function MobilePanelSheet({
 
 function GameLoading() {
   return (
-    <div
+    <main
       aria-live="polite"
       className="grid min-h-screen place-items-center bg-background px-4"
+      id="main-content"
       role="status"
+      tabIndex={-1}
     >
       <div className="text-center">
         <Sparkles
@@ -804,6 +960,6 @@ function GameLoading() {
           Reconnecting the deterministic reality cartridge…
         </p>
       </div>
-    </div>
+    </main>
   );
 }

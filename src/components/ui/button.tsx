@@ -15,11 +15,11 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          "border-primary/70 bg-primary text-white shadow-[var(--shadow-action)] hover:bg-[#7c4ee5] active:bg-[#7042d2]",
+          "border-primary/70 bg-[#7447d8] text-white shadow-[var(--shadow-action)] hover:bg-[#7c4ee5] active:bg-[#7042d2]",
         exploration:
           "border-exploration/60 bg-exploration text-inverse-foreground shadow-[var(--shadow-action)] hover:bg-[#20bfd7] active:bg-[#1ca9be]",
         ruleshift:
-          "border-ruleshift/70 bg-ruleshift text-white shadow-[var(--shadow-ruleshift)] hover:bg-[#e63553] active:bg-[#ca2d48]",
+          "border-[#e84b67] bg-[#c92f4e] text-white shadow-[var(--shadow-ruleshift)] hover:bg-[#d93655] active:bg-[#b72945]",
         danger:
           "border-danger/70 bg-danger text-inverse-foreground shadow-[var(--shadow-action)] hover:bg-[#e76478] active:bg-[#cd566a]",
         secondary:

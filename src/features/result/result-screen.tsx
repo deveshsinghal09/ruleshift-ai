@@ -1,9 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Crown,
+  ExternalLink,
   Gauge,
   Medal,
   RefreshCw,
@@ -13,6 +15,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { AudioControls } from "@/components/audio/audio-controls";
 import { PageBackground } from "@/components/layout/page-background";
 import { RuleShiftMark } from "@/components/brand/ruleshift-mark";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +35,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { createHttpAdventureTransport } from "@/features/adventure/http-transport";
 import type {
   AdventureTransport,
@@ -82,21 +84,27 @@ export function ResultScreen({ sessionId, transport }: ResultScreenProps) {
 
   if (isLoading) {
     return (
-      <div
+      <main
         className="grid min-h-screen place-items-center bg-background px-4"
+        id="main-content"
         role="status"
+        tabIndex={-1}
       >
         <p className="font-display text-lg font-semibold">
           Compiling your adventure record…
         </p>
-      </div>
+      </main>
     );
   }
 
   if (!state) {
     return (
       <PageBackground>
-        <main className="grid min-h-screen place-items-center px-4">
+        <main
+          className="grid min-h-screen place-items-center px-4"
+          id="main-content"
+          tabIndex={-1}
+        >
           <Card className="w-full max-w-lg" variant="danger">
             <CardHeader>
               <CardTitle>Result unavailable</CardTitle>
@@ -126,12 +134,24 @@ export function ResultScreen({ sessionId, transport }: ResultScreenProps) {
     <PageBackground tone={isVictory ? "exploration" : "ruleshift"}>
       <header className="mx-auto flex w-full max-w-[90rem] items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-10">
         <RuleShiftMark />
-        <Badge variant={isVictory ? "success" : "danger"}>
-          {isVictory ? "Adventure complete" : "Timeline collapsed"}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant={isVictory ? "success" : "danger"}>
+            {isVictory ? "Adventure complete" : "Timeline collapsed"}
+          </Badge>
+          <AudioControls />
+        </div>
       </header>
 
-      <main className="mx-auto w-full max-w-[90rem] px-4 pb-20 pt-8 sm:px-6 lg:px-10 lg:pb-28 lg:pt-14">
+      <main
+        className="mx-auto w-full max-w-[90rem] px-4 pb-20 pt-8 sm:px-6 lg:px-10 lg:pb-28 lg:pt-14"
+        id="main-content"
+        tabIndex={-1}
+      >
+        <p aria-live="assertive" className="sr-only" role="alert">
+          {isVictory
+            ? `Victory. ${state.player.profile.name} completed the adventure with ${state.score} points.`
+            : `Defeat. ${state.player.profile.name} completed the run with ${state.score} points.`}
+        </p>
         <section className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-end">
           <div>
             {isVictory ? (
@@ -292,25 +312,35 @@ export function ResultScreen({ sessionId, transport }: ResultScreenProps) {
         <DialogContent>
           <DialogHeader>
             <Badge className="w-fit" variant="ai">
-              Share placeholder
+              Private result card
             </Badge>
-            <DialogTitle>Result links arrive in a later phase</DialogTitle>
+            <DialogTitle>Your shareable adventure image</DialogTitle>
             <DialogDescription>
-              Sessions are private to this browser owner token. Public sharing
-              remains intentionally disabled.
+              This image is generated from persisted result data and remains
+              protected by this browser&apos;s private session cookie.
             </DialogDescription>
           </DialogHeader>
-          <div className="mt-5 space-y-2">
-            <label className="text-sm font-semibold" htmlFor="share-preview">
-              Future share link
-            </label>
-            <Input
-              id="share-preview"
-              readOnly
-              value={`/result/${state.sessionId}`}
+          <div className="mt-5 overflow-hidden rounded-lg border border-border bg-pressed">
+            <Image
+              alt={`RuleShift AI ${isVictory ? "victory" : "defeat"} result card for ${state.player.profile.name}`}
+              className="aspect-[1200/630] h-auto w-full"
+              height={630}
+              src={`/api/sessions/${state.sessionId}/result/image`}
+              unoptimized
+              width={1200}
             />
           </div>
           <DialogFooter>
+            <Button asChild variant="secondary">
+              <a
+                href={`/api/sessions/${state.sessionId}/result/image`}
+                rel="noreferrer"
+                target="_blank"
+              >
+                Open image
+                <ExternalLink aria-hidden="true" className="size-4" />
+              </a>
+            </Button>
             <Button onClick={() => setShareOpen(false)}>
               Keep this result private
               <ArrowRight aria-hidden="true" className="size-4" />

@@ -87,6 +87,8 @@ progression, and outcomes.
 - `POST /api/sessions/[sessionId]/actions` processes one versioned,
   idempotent, authoritative turn.
 - `GET /api/sessions/[sessionId]/result` returns completed result data.
+- `GET /api/sessions/[sessionId]/result/image` renders an owner-protected
+  1200×630 result card from persisted data without exposing owner tokens.
 
 Turns use optimistic state versions, unique idempotency keys, a unique
 session/turn constraint, and a serializable transaction containing the current
@@ -100,6 +102,11 @@ Run the complete quality suite, including PostgreSQL and browser layers:
 ```powershell
 npm run quality
 ```
+
+The Playwright layer includes automated WCAG A/AA axe checks, reduced-motion
+and audio-preference coverage, and overflow checks at 375, 640, 768, 1024, and
+1440 pixels. Optional browser-generated audio starts only after interaction and
+the entire adventure remains understandable while muted.
 
 Database integration tests run separately and only against the explicitly
 configured test database:

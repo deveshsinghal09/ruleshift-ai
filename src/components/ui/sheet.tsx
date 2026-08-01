@@ -33,7 +33,7 @@ function SheetOverlay({
 
 export interface SheetContentProps
   extends ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {
-  side?: "right" | "bottom";
+  side?: "right" | "bottom" | "responsive";
 }
 
 function SheetContent({
@@ -52,6 +52,8 @@ function SheetContent({
             "inset-y-0 right-0 w-[min(26rem,calc(100%-1.5rem))] border-l",
           side === "bottom" &&
             "inset-x-0 bottom-0 max-h-[85vh] rounded-t-lg border-t",
+          side === "responsive" &&
+            "inset-x-0 bottom-0 max-h-[85vh] rounded-t-lg border-t md:inset-x-auto md:inset-y-0 md:bottom-auto md:right-0 md:max-h-none md:w-[min(28rem,calc(100%-2rem))] md:rounded-none md:border-l md:border-t-0",
           focusRing,
           className,
         )}

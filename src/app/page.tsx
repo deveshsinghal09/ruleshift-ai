@@ -56,7 +56,7 @@ export default function HomePage() {
     <PageBackground tone="ai">
       <SiteHeader />
 
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <section className="mx-auto grid min-h-[calc(100svh-84px)] w-full max-w-[90rem] items-center gap-12 px-4 pb-16 pt-8 sm:px-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(24rem,0.8fr)] lg:gap-16 lg:px-10 lg:pb-24">
           <div className="max-w-3xl">
             <Badge className="mb-6" variant="ai">
@@ -229,7 +229,7 @@ export default function HomePage() {
 
             <div className="relative border-y border-ruleshift/55 bg-pressed px-5 py-8 shadow-[var(--shadow-ruleshift)] sm:px-8">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <span className="font-system text-xs text-ruleshift">
+                <span className="font-system text-xs text-[#fda4af]">
                   ACTIVE RULE / 3 TURNS
                 </span>
                 <Zap aria-hidden="true" className="size-5 text-ruleshift" />

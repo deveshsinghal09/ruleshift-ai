@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Unbounded } from "next/font/google";
 import type { ReactNode } from "react";
+import { SkipLink } from "@/components/accessibility/skip-link";
+import { AudioProvider } from "@/components/audio/audio-provider";
 import "./globals.css";
 
 const geist = Geist({
@@ -37,7 +39,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <body
         className={`${geist.variable} ${geistMono.variable} ${unbounded.variable}`}
       >
-        {children}
+        <AudioProvider>
+          <SkipLink />
+          {children}
+        </AudioProvider>
       </body>
     </html>
   );

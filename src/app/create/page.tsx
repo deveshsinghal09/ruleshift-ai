@@ -13,7 +13,7 @@ export default function CreateCharacterPage() {
   return (
     <PageBackground tone="exploration">
       <SiteHeader showStart={false} />
-      <main>
+      <main id="main-content" tabIndex={-1}>
         <CharacterCreator />
       </main>
     </PageBackground>

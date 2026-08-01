@@ -19,8 +19,8 @@ test("mobile command dock exposes every gameplay panel at 375px", async ({
   for (const panel of [
     { button: "Player", heading: "Player status" },
     { button: "Rules", heading: "Rule and objective" },
-    { button: "Items", heading: "Inventory" },
-    { button: "Timeline", heading: "Adventure timeline" },
+    { button: "Inventory", heading: "Inventory" },
+    { button: "History", heading: "Adventure history" },
   ]) {
     await navigation.getByRole("button", { name: panel.button }).click();
     await expect(

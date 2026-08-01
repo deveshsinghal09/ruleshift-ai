@@ -113,7 +113,7 @@ const colorTokens = [
 export default function DesignSystemPage() {
   return (
     <PageBackground tone="ai">
-      <main className="mx-auto w-full max-w-[90rem] px-4 py-8 sm:px-6 sm:py-12 lg:px-10 lg:py-16">
+      <main className="mx-auto w-full max-w-[90rem] px-4 py-8 sm:px-6 sm:py-12 lg:px-10 lg:py-16" id="main-content" tabIndex={-1}>
         <header className="grid gap-8 pb-12 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-end lg:pb-16">
           <div className="space-y-5">
             <Badge variant="ai">

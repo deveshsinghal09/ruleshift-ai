@@ -60,7 +60,7 @@ export function RulePreview() {
             transition={getMotionTransition("deliberate", reduceMotion)}
           >
             <div className="space-y-2">
-              <p className="font-system text-xs text-ruleshift">
+              <p className="font-system text-xs text-[#fda4af]">
                 REALITY PATCH ACCEPTED
               </p>
               <h2 className="font-display text-2xl font-semibold tracking-[-0.03em] sm:text-3xl">
@@ -78,7 +78,7 @@ export function RulePreview() {
                 </p>
               </div>
               <div className="rounded-md border border-ruleshift/50 bg-ruleshift/8 p-4">
-                <p className="mb-1 text-xs font-semibold text-ruleshift">
+                <p className="mb-1 text-xs font-semibold text-[#fda4af]">
                   After
                 </p>
                 <p className="font-semibold text-foreground">{rule.after}</p>

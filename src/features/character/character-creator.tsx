@@ -12,7 +12,7 @@ import {
   Sparkles,
   UserRound,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,6 +86,21 @@ export function CharacterCreator({
   const [error, setError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
   const [hasHydrated, setHasHydrated] = useState(false);
+  const previousStepRef = useRef(step);
+
+  useEffect(() => {
+    if (previousStepRef.current === step) {
+      return;
+    }
+    previousStepRef.current = step;
+    const headingIds = [
+      "character-heading",
+      "mood-heading",
+      "difficulty-heading",
+      "passport-heading",
+    ] as const;
+    document.getElementById(headingIds[step])?.focus();
+  }, [step]);
 
   useEffect(() => {
     let isActive = true;
@@ -236,6 +251,7 @@ export function CharacterCreator({
             <h1
               className="mt-5 font-display text-3xl font-semibold tracking-[-0.03em] sm:text-5xl"
               id="character-heading"
+              tabIndex={-1}
             >
               Who enters the unstable world?
             </h1>
@@ -362,6 +378,7 @@ export function CharacterCreator({
           <h1
             className="mt-5 font-display text-3xl font-semibold tracking-[-0.03em] sm:text-5xl"
             id="mood-heading"
+            tabIndex={-1}
           >
             How should this world feel?
           </h1>
@@ -420,6 +437,7 @@ export function CharacterCreator({
           <h1
             className="mt-5 font-display text-3xl font-semibold tracking-[-0.03em] sm:text-5xl"
             id="difficulty-heading"
+            tabIndex={-1}
           >
             How hard should reality push back?
           </h1>
@@ -484,6 +502,7 @@ export function CharacterCreator({
           <h1
             className="mt-5 font-display text-3xl font-semibold tracking-[-0.03em] sm:text-5xl"
             id="passport-heading"
+            tabIndex={-1}
           >
             One hero. One unstable world.
           </h1>

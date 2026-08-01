@@ -44,7 +44,7 @@ every component, gradient text, decorative blur, and constant animation.
 | --- | --- | --- |
 | `--text-primary` | `#f8fafc` | Headings and primary copy |
 | `--text-secondary` | `#b6bfce` | Supporting copy |
-| `--text-muted` | `#7f8999` | Metadata and placeholders |
+| `--text-muted` | `#9aa4b5` | Metadata and placeholders |
 | `--text-inverse` | `#08090d` | Text on bright actions |
 
 ### Context signals
@@ -143,12 +143,18 @@ Every applicable component defines:
 ## Responsive behavior
 
 - Below 640 pixels: single-column composition, 16-pixel page gutters, full-width
-  primary controls, and sheets anchored to the bottom where appropriate.
-- 640–1024 pixels: flexible two-column component examples and compact gutters.
-- Above 1024 pixels: wider component bench with grouped controls.
+  primary controls, a five-destination game dock, and bottom-anchored sheets.
+- 640–767 pixels: single-column story composition with roomier gutters and
+  bottom-anchored sheets.
+- 768–1023 pixels: the story remains primary while sheets become right-side
+  drawers for tablet reach and context retention.
+- At 1024 pixels and above: player and objective context moves into persistent
+  side rails; the mobile command dock is removed.
 - Above 1440 pixels: content width remains bounded; spacing grows before type.
 
 Controls maintain a minimum 44-pixel touch target and never require hover.
+Focusing the custom-action field moves the mobile command dock out of the
+software-keyboard area without changing the story or action order.
 
 ## Accessibility principles
 
@@ -159,3 +165,17 @@ Controls maintain a minimum 44-pixel touch target and never require hover.
 - Respect `prefers-reduced-motion`.
 - Keep content understandable without motion, sound, hover, or color.
 - Never place essential text in decorative imagery.
+
+## Assistive feedback and audio
+
+- A global skip link targets the single `main` landmark on every route.
+- Character-creation step changes move focus to the new step heading.
+- Game live regions announce health, energy, narration, item, and RuleShift
+  changes without duplicating visible content in the accessibility tree.
+- Victory and defeat are announced on the result route.
+- Optional action, damage, item, RuleShift, victory, and defeat cues are
+  synthesized with the Web Audio API; no copyrighted audio files are loaded.
+- Audio context creation occurs only after an in-game user action. Mute and
+  volume preferences persist locally, while every cue remains non-essential.
+- Reduced-motion mode removes page, narration, dialog, drawer, stat, and item
+  movement while preserving immediate high-contrast state changes.

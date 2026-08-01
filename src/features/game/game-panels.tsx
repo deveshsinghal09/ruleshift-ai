@@ -8,6 +8,7 @@ import {
   Star,
   Zap,
 } from "lucide-react";
+import { useId } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -24,15 +25,20 @@ import type {
 } from "@/features/adventure/types";
 
 export function PlayerPanel({ state }: { state: GameState }) {
+  const titleId = useId();
+  const itemCount = state.player.inventory.reduce(
+    (total, item) => total + item.quantity,
+    0,
+  );
   return (
-    <section aria-labelledby="player-panel-title" className="space-y-5">
+    <section aria-labelledby={titleId} className="space-y-5">
       <div>
         <p className="font-system text-[0.6875rem] text-exploration">
           PLAYER SIGNAL
         </p>
         <h2
           className="mt-2 font-display text-lg font-semibold"
-          id="player-panel-title"
+          id={titleId}
         >
           {state.player.profile.name}
         </h2>
@@ -81,12 +87,9 @@ export function PlayerPanel({ state }: { state: GameState }) {
         </p>
         <p className="mt-2 flex items-center gap-2 text-sm text-secondary-foreground">
           <Backpack aria-hidden="true" className="size-4" />
-          {state.player.inventory.length === 0
+          {itemCount === 0
             ? "No items yet"
-            : `${state.player.inventory.reduce(
-                (total, item) => total + item.quantity,
-                0,
-              )} carried item`}
+            : `${itemCount} carried ${itemCount === 1 ? "item" : "items"}`}
         </p>
       </div>
     </section>
@@ -121,7 +124,10 @@ function StatBar({
           <Icon aria-hidden="true" className="size-4" />
           {label}
         </span>
-        <span className="font-system text-xs text-secondary-foreground">
+        <span
+          className="stat-value rounded-sm px-1 font-system text-xs text-secondary-foreground"
+          key={value}
+        >
           {value} / {maximum}
         </span>
       </div>
@@ -136,11 +142,12 @@ function StatBar({
 }
 
 export function ObjectivePanel({ state }: { state: GameState }) {
+  const titleId = useId();
   const objective = state.objectives[0];
   const progress = (objective.progress / objective.target) * 100;
 
   return (
-    <section aria-labelledby="objective-title" className="space-y-4">
+    <section aria-labelledby={titleId} className="space-y-4">
       <div className="flex items-start gap-3">
         <Crown
           aria-hidden="true"
@@ -150,7 +157,7 @@ export function ObjectivePanel({ state }: { state: GameState }) {
           <p className="font-system text-[0.6875rem] text-warning">
             PRIMARY OBJECTIVE
           </p>
-          <h2 className="mt-2 text-sm font-semibold" id="objective-title">
+          <h2 className="mt-2 text-sm font-semibold" id={titleId}>
             {objective.title}
           </h2>
         </div>
@@ -169,13 +176,14 @@ export function ObjectivePanel({ state }: { state: GameState }) {
 }
 
 export function RulePanel({ state }: { state: GameState }) {
+  const titleId = useId();
   if (state.activeRules.length === 0) {
     return (
-      <section aria-labelledby="rule-panel-title">
+      <section aria-labelledby={titleId}>
         <p className="font-system text-[0.6875rem] text-muted-foreground">
           ACTIVE RULE
         </p>
-        <h2 className="mt-2 text-sm font-semibold" id="rule-panel-title">
+        <h2 className="mt-2 text-sm font-semibold" id={titleId}>
           Reality is currently stable
         </h2>
         <p className="mt-2 text-sm leading-6 text-secondary-foreground">
@@ -186,17 +194,17 @@ export function RulePanel({ state }: { state: GameState }) {
   }
 
   return (
-    <section aria-labelledby="rule-panel-title" className="space-y-5">
+    <section aria-labelledby={titleId} className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Badge variant="ruleshift">
           <Zap aria-hidden="true" className="size-3" />
           {state.activeRules.length} active
         </Badge>
-        <span className="font-system text-xs text-ruleshift">
+        <span className="font-system text-xs text-[#fda4af]">
           REGISTERED
         </span>
       </div>
-      <h2 className="sr-only" id="rule-panel-title">
+      <h2 className="sr-only" id={titleId}>
         Active RuleShifts
       </h2>
       <div className="space-y-5">
@@ -206,7 +214,7 @@ export function RulePanel({ state }: { state: GameState }) {
               <h3 className="min-w-0 break-words font-display text-base font-semibold">
                 {rule.name}
               </h3>
-              <span className="shrink-0 font-system text-xs text-ruleshift">
+              <span className="shrink-0 font-system text-xs text-[#fda4af]">
                 {rule.remainingTurns}/{rule.totalTurns}
               </span>
             </div>
@@ -234,13 +242,14 @@ export function DungeonMasterPanel({
   aside: string;
   mood: string;
 }) {
+  const titleId = useId();
   return (
-    <section aria-labelledby="dm-title" className="space-y-3">
+    <section aria-labelledby={titleId} className="space-y-3">
       <div className="flex items-center gap-2">
         <Sparkles aria-hidden="true" className="size-4 text-ai" />
         <h2
-          className="font-system text-[0.6875rem] text-ai"
-          id="dm-title"
+          className="font-system text-[0.6875rem] text-[#c4b5fd]"
+          id={titleId}
         >
           DUNGEON MASTER
         </h2>
@@ -278,7 +287,7 @@ export function InventoryList({
   return (
     <div className="space-y-3">
       {items.map((item) => (
-        <Card key={item.id} variant="success">
+        <Card className="inventory-entry" key={item.id} variant="success">
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
               <Badge variant="success">{item.rarity}</Badge>
@@ -301,6 +310,14 @@ export function TimelineList({
 }: {
   events: readonly GameHistoryEntry[];
 }) {
+  if (events.length === 0) {
+    return (
+      <p className="rounded-lg border border-dashed border-strong-border bg-pressed p-5 text-sm leading-6 text-secondary-foreground">
+        No history yet. Your first resolved action will appear here.
+      </p>
+    );
+  }
+
   return (
     <ol className="space-y-0">
       {events.map((event, index) => (
@@ -334,7 +351,7 @@ export function TimelineList({
             </p>
             {event.ruleEvents.map((ruleEvent) => (
               <p
-                className="mt-2 flex items-start gap-2 text-sm leading-6 text-ruleshift"
+                className="mt-2 flex items-start gap-2 text-sm leading-6 text-[#fda4af]"
                 key={ruleEvent.id}
               >
                 <Zap

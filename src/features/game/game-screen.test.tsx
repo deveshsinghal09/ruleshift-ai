@@ -109,15 +109,15 @@ describe("GameScreen", () => {
         await screen.findByText("Résumé of Questionable Experience"),
       ).toBeInTheDocument();
 
-      await user.click(screen.getByRole("button", { name: "Items" }));
+      await user.click(screen.getByRole("button", { name: "Inventory" }));
       expect(
         screen.getByRole("dialog", { name: "Inventory" }),
       ).toBeInTheDocument();
       await user.click(screen.getByRole("button", { name: "Close panel" }));
 
-      await user.click(screen.getByRole("button", { name: "Timeline" }));
+      await user.click(screen.getByRole("button", { name: "History" }));
       expect(
-        screen.getByRole("dialog", { name: "Adventure timeline" }),
+        screen.getByRole("dialog", { name: "Adventure history" }),
       ).toBeInTheDocument();
       expect(
         screen.getByText("The examiner failed its own assessment"),
