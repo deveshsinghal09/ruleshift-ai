@@ -61,7 +61,7 @@ export default function HomePage() {
           <div className="max-w-3xl">
             <Badge className="mb-6" variant="ai">
               <Sparkles aria-hidden="true" className="size-3" />
-              A five-minute adventure that rewrites itself
+              AI creates the surprise. The engine keeps it fair.
             </Badge>
             <h1 className="font-display text-[clamp(2.75rem,7vw,5.8rem)] font-semibold leading-[0.98] tracking-[-0.035em] text-foreground">
               The world is stable.
@@ -70,9 +70,9 @@ export default function HomePage() {
               </span>
             </h1>
             <p className="mt-7 max-w-2xl text-lg leading-8 text-secondary-foreground sm:text-xl">
-              Enter a cinematic card adventure where an AI Dungeon Master
-              invents the story—and deterministic RuleShifts make every turn
-              surprising without making it unfair.
+              Generative games are creative but unreliable when the model also
+              controls the rules. Here, AI invents the story while a
+              deterministic engine calculates every consequence.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Button asChild className="w-full sm:w-auto" size="lg">
@@ -82,7 +82,7 @@ export default function HomePage() {
                 </Link>
               </Button>
               <p className="text-sm text-muted-foreground">
-                No account. No setup. Demo runs locally.
+                No account. No install. Your session resumes in this browser.
               </p>
             </div>
             <div className="mt-10 flex flex-wrap gap-x-6 gap-y-3 border-t border-border pt-5 text-sm text-secondary-foreground">
@@ -91,18 +91,18 @@ export default function HomePage() {
                   aria-hidden="true"
                   className="size-4 text-success"
                 />
-                Safe predefined rules
+                Registered RuleShifts
               </span>
               <span className="inline-flex items-center gap-2">
                 <Cpu aria-hidden="true" className="size-4 text-ai" />
-                Playable offline demo
+                Survives AI failure
               </span>
               <span className="inline-flex items-center gap-2">
                 <Compass
                   aria-hidden="true"
                   className="size-4 text-exploration"
                 />
-                Built for replay
+                Deterministic outcomes
               </span>
             </div>
           </div>
@@ -110,8 +110,41 @@ export default function HomePage() {
           <RulePreview />
         </section>
 
+        <section className="border-y border-border bg-surface-secondary">
+          <div className="mx-auto grid w-full max-w-[90rem] gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-center lg:gap-16 lg:px-10 lg:py-20">
+            <div>
+              <p className="font-system text-xs text-ruleshift">
+                THE PROBLEM
+              </p>
+              <h2 className="mt-3 font-display text-2xl font-semibold tracking-[-0.025em] sm:text-3xl">
+                Creative AI should not be the referee.
+              </h2>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div>
+                <p className="text-sm font-semibold text-danger">
+                  Ordinary generative play
+                </p>
+                <p className="mt-2 text-base leading-7 text-secondary-foreground">
+                  A model can forget state, invent mechanics, contradict an
+                  earlier turn, or make an unfair call.
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-success">
+                  RuleShift&apos;s contract
+                </p>
+                <p className="mt-2 text-base leading-7 text-secondary-foreground">
+                  AI proposes creative content. Validated TypeScript rules and
+                  a seeded engine decide what actually happens.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section
-          className="border-y border-border bg-surface-secondary"
+          className="border-b border-border bg-background"
           id="how-it-works"
         >
           <div className="mx-auto grid w-full max-w-[90rem] gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[18rem_1fr] lg:px-10 lg:py-28">
@@ -250,8 +283,8 @@ export default function HomePage() {
             Your next wrong answer might save the world.
           </h2>
           <p className="mt-5 max-w-2xl text-base leading-7 text-secondary-foreground">
-            Build a hero, survive four scripted turns, and claim the Golden
-            Offer Letter.
+            Build a hero, survive four connected turns, and claim the Golden
+            Offer Letter through AI creativity and deterministic consequences.
           </p>
           <Button asChild className="mt-8" size="lg">
             <Link href="/create">
@@ -264,7 +297,7 @@ export default function HomePage() {
 
       <footer className="border-t border-border">
         <div className="mx-auto flex w-full max-w-[90rem] flex-col gap-3 px-4 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-10">
-          <span>RuleShift AI · Local scripted demo</span>
+          <span>RuleShift AI · Deterministic adventure engine</span>
           <span>Reality changes. The rules stay safe.</span>
         </div>
       </footer>

@@ -6,6 +6,7 @@ import {
   Backpack,
   ChevronRight,
   CircleAlert,
+  CircleHelp,
   Clock3,
   Heart,
   Menu,
@@ -70,12 +71,32 @@ import {
   RulePanel,
   TimelineList,
 } from "@/features/game/game-panels";
+import { FirstTurnGuide } from "@/features/game/first-turn-guide";
+import { getRuleBeforeExplanation } from "@/features/game/rule-explanations";
+import {
+  buildTurnResolutionReceipt,
+  type TurnResolutionReceipt as TurnResolutionReceiptModel,
+} from "@/features/game/turn-resolution";
+import { TurnResolutionReceipt } from "@/features/game/turn-resolution-receipt";
 import { useGame } from "@/features/game/use-game";
 import { useReducedMotionPreference } from "@/hooks/use-reduced-motion-preference";
 import { getMotionTransition } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 type MobilePanel = "player" | "rule" | "timeline" | "inventory" | null;
+
+const onboardingStorageKey = "ruleshift:first-turn-briefing:v1";
+
+function hasDismissedFirstTurnBriefing(): boolean {
+  if (typeof globalThis.localStorage === "undefined") {
+    return false;
+  }
+  try {
+    return globalThis.localStorage.getItem(onboardingStorageKey) === "complete";
+  } catch {
+    return false;
+  }
+}
 
 interface GameScreenProps {
   onComplete?: (sessionId: string) => void;
@@ -101,10 +122,17 @@ export function GameScreen({
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<MobilePanel>(null);
+  const [briefingDismissed, setBriefingDismissed] = useState(
+    hasDismissedFirstTurnBriefing,
+  );
+  const [briefingRequested, setBriefingRequested] = useState(false);
+  const [turnReceipt, setTurnReceipt] =
+    useState<TurnResolutionReceiptModel | null>(null);
   const [dismissedAnnouncementId, setDismissedAnnouncementId] = useState<
     string | null
   >(null);
   const sceneHeadingRef = useRef<HTMLHeadingElement>(null);
+  const actionsHeadingRef = useRef<HTMLHeadingElement>(null);
   const reduceMotion = useReducedMotionPreference();
   const { playCue } = useAudio();
 
@@ -119,6 +147,17 @@ export function GameScreen({
     }
   }, [dismissedAnnouncementId, state]);
 
+  function dismissBriefing(): void {
+    try {
+      globalThis.localStorage.setItem(onboardingStorageKey, "complete");
+    } catch {
+      // The briefing still dismisses when storage is blocked.
+    }
+    setBriefingDismissed(true);
+    setBriefingRequested(false);
+    actionsHeadingRef.current?.focus();
+  }
+
   async function resolveAction(request: {
     actionId?: string;
     customAction?: string;
@@ -131,6 +170,7 @@ export function GameScreen({
     playCue("action");
     const nextState = await submitAction(request);
     if (nextState) {
+      setTurnReceipt(buildTurnResolutionReceipt(previousState, nextState));
       const previousItems = previousState.player.inventory.reduce(
         (total, item) => total + item.quantity,
         0,
@@ -198,7 +238,7 @@ export function GameScreen({
             <CardTitle>Adventure signal lost</CardTitle>
             <CardDescription>
               {error ??
-                "This local adventure was not found. Create a new passport to continue."}
+                "This adventure was not found. Create a new passport to continue."}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -220,10 +260,13 @@ export function GameScreen({
   const showAnnouncement =
     announcement !== undefined &&
     announcement.id !== dismissedAnnouncementId;
+  const showBriefing =
+    briefingRequested || (state.turn === 0 && !briefingDismissed);
 
   return (
     <div className="game-shell min-h-screen bg-background pb-20 text-foreground lg:pb-0">
       <GameHeader
+        onBriefing={() => setBriefingRequested(true)}
         onInventory={() => setInventoryOpen(true)}
         onTimeline={() => setTimelineOpen(true)}
         state={state}
@@ -239,6 +282,17 @@ export function GameScreen({
         </aside>
 
         <section aria-labelledby="scene-title" className="min-w-0 space-y-5">
+          {showBriefing ? (
+            <FirstTurnGuide
+              objective={state.objectives[0]?.title ?? "Complete the active objective"}
+              onDismiss={dismissBriefing}
+            />
+          ) : null}
+
+          <div className="rounded-lg border border-warning/35 bg-card p-5 lg:hidden">
+            <ObjectivePanel state={state} />
+          </div>
+
           <motion.div
             animate={{ opacity: 1, y: 0 }}
             initial={{
@@ -255,6 +309,7 @@ export function GameScreen({
             />
           </motion.div>
           <RewardSummary state={state} />
+          {turnReceipt ? <TurnResolutionReceipt receipt={turnReceipt} /> : null}
 
           <div aria-labelledby="actions-title">
             <div className="mb-4 flex items-center justify-between gap-4">
@@ -265,6 +320,8 @@ export function GameScreen({
                 <h2
                   className="mt-1 font-display text-xl font-semibold"
                   id="actions-title"
+                  ref={actionsHeadingRef}
+                  tabIndex={-1}
                 >
                   Choose an action
                 </h2>
@@ -540,12 +597,14 @@ export function GameScreen({
                 BEFORE
               </p>
               <p className="mt-2 text-sm text-secondary-foreground line-through">
-                The assessment rubric follows ordinary combat rules.
+                {announcement
+                  ? getRuleBeforeExplanation(announcement.ruleKey)
+                  : "Ordinary deterministic rules apply."}
               </p>
             </div>
             <div className="rounded-md border border-ruleshift/50 bg-ruleshift/8 p-4">
               <p className="font-system text-[0.6875rem] font-semibold text-[#fda4af]">
-                AFTER
+                NOW
               </p>
               <p className="mt-2 text-sm font-semibold">
                 {announcedRule?.uiExplanation ??
@@ -576,10 +635,12 @@ export function GameScreen({
 }
 
 function GameHeader({
+  onBriefing,
   onInventory,
   onTimeline,
   state,
 }: {
+  onBriefing: () => void;
   onInventory: () => void;
   onTimeline: () => void;
   state: GameState;
@@ -600,6 +661,14 @@ function GameHeader({
           </div>
         </div>
         <div className="flex items-center gap-1">
+          <Button
+            aria-label="Show game briefing"
+            onClick={onBriefing}
+            size="icon"
+            variant="ghost"
+          >
+            <CircleHelp aria-hidden="true" className="size-5" />
+          </Button>
           <Button
             aria-label="Open inventory"
             onClick={onInventory}
@@ -954,7 +1023,7 @@ function GameLoading() {
           className="mx-auto size-8 animate-pulse text-ai motion-reduce:animate-none"
         />
         <p className="mt-4 font-display text-lg font-semibold">
-          Restoring the local adventure
+          Restoring your adventure
         </p>
         <p className="mt-2 text-sm text-secondary-foreground">
           Reconnecting the deterministic reality cartridge…

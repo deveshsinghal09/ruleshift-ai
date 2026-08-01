@@ -27,9 +27,9 @@
 
 <p>
   <a href="https://ruleshift-ai.vercel.app"><strong>Play the live adventure</strong></a>
-  ·
+  &middot;
   <a href="https://github.com/deveshsinghal09/ruleshift-ai/actions/workflows/quality.yml"><img alt="Quality gate" src="https://github.com/deveshsinghal09/ruleshift-ai/actions/workflows/quality.yml/badge.svg"></a>
-  ·
+  &middot;
   <a href="https://github.com/deveshsinghal09/ruleshift-ai/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/deveshsinghal09/ruleshift-ai?display_name=tag&amp;sort=semver"></a>
 </p>
 
@@ -44,6 +44,21 @@
 The MVP is a polished single-player hackathon experience. Its strict TypeScript
 engine is the sole authority over gameplay, while AI output passes schema,
 policy, registry, and bounded-effect validation before it can influence a turn.
+
+## The problem
+
+Generative games are creative, but they become unreliable when the same model
+also acts as the rules engine. A model can forget state, invent mechanics,
+contradict an earlier turn, or make an unfair call.
+
+RuleShift AI separates those responsibilities. Gemini may propose narration,
+choices, items, and a known temporary rule; a seeded TypeScript engine alone
+calculates health, energy, damage, score, inventory, objectives, and outcomes.
+The experience stays surprising without surrendering fairness or continuity.
+
+Every completed turn exposes a player-facing resolution receipt showing the
+creative source, deterministic state changes, active RuleShift behavior, and
+the safety boundary that was enforced.
 
 ## Architecture
 
@@ -186,7 +201,7 @@ ownership, persistence, and deployment topology.
 | `/create` | Character, mood, difficulty, and passport creation |
 | `/game/[sessionId]` | Persisted adventure console with actions, inventory, rules, and history |
 | `/result/[sessionId]` | Private victory or defeat summary |
-| `/api/sessions/[sessionId]/result/image` | Owner-protected 1200×630 result card |
+| `/api/sessions/[sessionId]/result/image` | Owner-protected 1200x630 result card |
 | `/api/health` | Database readiness and deterministic-fallback status |
 | `/design-system` | Customized component calibration gallery |
 
@@ -310,6 +325,19 @@ validated session API, so seeding cannot overwrite player data.
 | `npm run smoke -- URL` | Verify a running deployment without reading sensitive data |
 
 Testing details and isolation rules live in [TESTING.md](./TESTING.md).
+
+## Codex execution evidence
+
+RuleShift AI was built through ten approval-gated Codex phases rather than a
+single code-generation pass. The repository preserves the phase branches,
+commits, verification commands, architectural decisions, fallback strategy,
+and review loops.
+
+- [Built with Codex](./BUILT_WITH_CODEX.md) documents what Codex planned,
+  implemented, verified, and corrected in each phase.
+- [First-time usability study](./USER_TESTING.md) provides a no-coaching
+  protocol and evidence table for five external playtests. Results must be
+  recorded only after real sessions; the repository does not fabricate them.
 
 ## Deployment
 

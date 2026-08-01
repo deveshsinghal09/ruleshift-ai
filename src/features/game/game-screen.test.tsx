@@ -54,6 +54,16 @@ describe("GameScreen", () => {
           name: "The attendance bell rings for you",
         }),
       ).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "Your mission, in 30 seconds" }),
+      ).toBeInTheDocument();
+      expect(screen.getByText(/Current objective:/i)).toHaveTextContent(
+        "Claim the Golden Offer Letter",
+      );
+      await user.click(
+        screen.getByRole("button", { name: "Show me the choices" }),
+      );
+      expect(screen.getByRole("heading", { name: "Choose an action" })).toHaveFocus();
 
       await user.click(
         screen.getByRole("button", {
@@ -68,6 +78,11 @@ describe("GameScreen", () => {
       expect(
         screen.getAllByText("MOOD: FUNNY · SOURCE: LOCAL ENGINE").length,
       ).toBeGreaterThan(0);
+      expect(
+        screen.getByRole("heading", { name: /how this turn was resolved/i }),
+      ).toBeInTheDocument();
+      expect(screen.getByText("Deterministic fallback")).toBeInTheDocument();
+      expect(screen.getByText(/calculated and validated/i)).toBeInTheDocument();
       expect(
         screen.getByText(/Funny lens: the danger is real/i),
       ).toBeInTheDocument();
@@ -89,6 +104,9 @@ describe("GameScreen", () => {
           /Clearly wrong answers deal an additional fixed amount/i,
         ).length,
       ).toBeGreaterThan(0);
+      expect(
+        screen.getByText("Wrong answers do not deal bonus enemy damage."),
+      ).toBeInTheDocument();
       expect(screen.getByText("3 OF 3 TURNS REMAIN")).toBeInTheDocument();
       await user.click(
         screen.getByRole("button", {

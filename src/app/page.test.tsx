@@ -18,6 +18,12 @@ describe("HomePage", () => {
     expect(
       screen.getByRole("heading", { name: /chaos has a contract/i }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: /creative ai should not be the referee/i,
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/seeded engine decide/i)).toBeInTheDocument();
   });
 
   it("exposes an interactive changing-rule preview", () => {

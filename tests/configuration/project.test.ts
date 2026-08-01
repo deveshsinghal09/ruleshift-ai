@@ -13,6 +13,17 @@ interface TypeScriptConfiguration {
   };
 }
 
+const documentationFiles = [
+  "ARCHITECTURE.md",
+  "BUILT_WITH_CODEX.md",
+  "DEPLOYMENT.md",
+  "DESIGN.md",
+  "PRODUCT.md",
+  "README.md",
+  "TESTING.md",
+  "USER_TESTING.md",
+] as const;
+
 function readJsonFile<T>(relativePath: string): T {
   const filePath = path.join(process.cwd(), relativePath);
   return JSON.parse(readFileSync(filePath, "utf8")) as T;
@@ -61,5 +72,18 @@ describe("project configuration", () => {
       readJsonFile<TypeScriptConfiguration>("tsconfig.json");
 
     expect(TypeScriptConfig.compilerOptions?.strict).toBe(true);
+  });
+
+  it("keeps project documentation free of encoding corruption", () => {
+    for (const relativePath of documentationFiles) {
+      const content = readFileSync(
+        path.join(process.cwd(), relativePath),
+        "utf8",
+      );
+
+      expect(content, relativePath).not.toMatch(
+        /[\u00c2\u00c3\u00e2\ufffd]/u,
+      );
+    }
   });
 });

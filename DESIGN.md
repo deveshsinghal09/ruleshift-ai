@@ -63,24 +63,24 @@ paired with an icon, label, pattern, or message; it never carries meaning alone.
 
 ## Typography
 
-- **Display:** Unbounded, weights 500–700. Used for world names, major state
+- **Display:** Unbounded, weights 500-700. Used for world names, major state
   changes, and short page titles.
 - **Interface:** Geist, variable weight. Used for body text and controls.
 - **System:** Geist Mono. Used for turn counters, RuleShift duration, compact
   measurements, and console-status messages.
 
 Display copy stays below `6rem`, uses no tighter than `-0.03em` tracking, and is
-kept short. Body copy targets `65–72ch` and a line height of at least `1.6`.
+kept short. Body copy targets `65-72ch` and a line height of at least `1.6`.
 
 ## Spacing
 
 The spacing scale is `4, 8, 12, 16, 24, 32, 48, 64` pixels.
 
 - Inline icon gaps: 8 pixels
-- Compact control padding: 8–12 pixels
-- Standard control padding: 12–16 pixels
+- Compact control padding: 8-12 pixels
+- Standard control padding: 12-16 pixels
 - Card padding: 16 pixels on mobile, 24 pixels from tablet upward
-- Section separation: 32–64 pixels
+- Section separation: 32-64 pixels
 
 Related content stays tight; unrelated systems receive visible separation.
 
@@ -144,9 +144,9 @@ Every applicable component defines:
 
 - Below 640 pixels: single-column composition, 16-pixel page gutters, full-width
   primary controls, a five-destination game dock, and bottom-anchored sheets.
-- 640–767 pixels: single-column story composition with roomier gutters and
+- 640-767 pixels: single-column story composition with roomier gutters and
   bottom-anchored sheets.
-- 768–1023 pixels: the story remains primary while sheets become right-side
+- 768-1023 pixels: the story remains primary while sheets become right-side
   drawers for tablet reach and context retention.
 - At 1024 pixels and above: player and objective context moves into persistent
   side rails; the mobile command dock is removed.

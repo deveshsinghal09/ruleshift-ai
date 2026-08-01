@@ -70,8 +70,8 @@ authoritative quantities or outcomes.
 The processing chain is:
 
 ```text
-provider text → JSON parse/repair → Zod schema → content policy
-→ registered-rule validation → bounded deterministic conversion → engine
+provider text -> JSON parse/repair -> Zod schema -> content policy
+-> registered-rule validation -> bounded deterministic conversion -> engine
 ```
 
 One retry and one repair attempt are bounded by a timeout. Every terminal

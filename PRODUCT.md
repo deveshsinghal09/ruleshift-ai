@@ -27,6 +27,11 @@ The distinctive mechanism is a deterministic game engine that safely applies
 predefined RuleShift behaviors proposed by an AI. The world can feel unstable
 without allowing generated content to corrupt authoritative game state.
 
+The problem is not a lack of generated stories; it is that generative games
+become inconsistent and unfair when probabilistic models also control rules and
+state. RuleShift AI separates creative proposals from authoritative decisions
+and makes that boundary visible to the player after every resolved turn.
+
 ## Operating Context
 
 Players create a character, enter a generated world, choose predefined or custom

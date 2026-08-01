@@ -256,7 +256,7 @@ export function CharacterCreator({
               Who enters the unstable world?
             </h1>
             <p className="mt-4 text-base leading-7 text-secondary-foreground">
-              Pick a prepared hero, use a local suggestion, or write your own.
+              Pick a prepared hero, generate a suggestion, or write your own.
               Your selection survives every back step.
             </p>
           </div>
@@ -319,7 +319,7 @@ export function CharacterCreator({
                   Write your own
                 </h2>
                 <p className="mt-1 text-sm text-secondary-foreground">
-                  A name and title are enough for the scripted demo.
+                  A name and title are enough to begin the adventure.
                 </p>
               </div>
               {selectedId === "custom" ? (

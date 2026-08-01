@@ -3,7 +3,7 @@ import { GameScreen } from "@/features/game/game-screen";
 
 export const metadata: Metadata = {
   title: "Adventure | RuleShift AI",
-  description: "Play the RuleShift AI scripted adventure demo.",
+  description: "Play an AI-directed adventure with deterministic consequences.",
 };
 
 interface GamePageProps {
