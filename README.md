@@ -20,10 +20,18 @@
   <img alt="Gemini" src="https://img.shields.io/badge/AI-Gemini-8E75B2?logo=googlegemini&amp;logoColor=white">
   <img alt="Vitest" src="https://img.shields.io/badge/Tests-Vitest-6E9F18?logo=vitest&amp;logoColor=white">
   <img alt="Playwright" src="https://img.shields.io/badge/E2E-Playwright-2EAD33?logo=playwright&amp;logoColor=white">
-  <img alt="Vercel" src="https://img.shields.io/badge/Deploy-Vercel-000000?logo=vercel&amp;logoColor=white">
+  <a href="https://ruleshift-ai.vercel.app"><img alt="Live on Vercel" src="https://img.shields.io/badge/Deploy-Live-000000?logo=vercel&amp;logoColor=white"></a>
 </p>
 
 <p><strong>Deterministic gameplay | Registered RuleShifts | Structured AI | Atomic saves | Accessible play | Offline fallback</strong></p>
+
+<p>
+  <a href="https://ruleshift-ai.vercel.app"><strong>Play the live adventure</strong></a>
+  ·
+  <a href="https://github.com/deveshsinghal09/ruleshift-ai/actions/workflows/quality.yml"><img alt="Quality gate" src="https://github.com/deveshsinghal09/ruleshift-ai/actions/workflows/quality.yml/badge.svg"></a>
+  ·
+  <a href="https://github.com/deveshsinghal09/ruleshift-ai/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/deveshsinghal09/ruleshift-ai?display_name=tag&amp;sort=semver"></a>
+</p>
 
 </div>
 
