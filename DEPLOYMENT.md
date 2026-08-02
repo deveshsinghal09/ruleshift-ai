@@ -86,7 +86,7 @@ No `vercel.json` is necessary. Use the detected Next.js framework defaults:
 - Install: `npm ci`
 - Build: `npm run build`
 - Output: Next.js managed output
-- Node.js: 20.19 or a compatible newer Node 20 runtime
+- Node.js: 24 LTS (pinned by `package.json` and `.nvmrc`)
 - Root directory: repository root
 
 Do not run migrations in the build command. A failed build must not partially

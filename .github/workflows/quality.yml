@@ -38,12 +38,12 @@ jobs:
           --health-retries 10
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           cache: npm
-          node-version: 20.19.0
+          node-version: 24
       - name: Install locked dependencies
         run: npm ci
       - name: Apply isolated test migrations
@@ -84,12 +84,12 @@ jobs:
           --health-retries 10
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           cache: npm
-          node-version: 20.19.0
+          node-version: 24
       - name: Install locked dependencies
         run: npm ci
       - name: Install Chromium

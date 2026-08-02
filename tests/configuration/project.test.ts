@@ -3,6 +3,9 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 interface ProjectPackage {
+  engines?: {
+    node?: string;
+  };
   license?: string;
   private?: boolean;
   scripts?: Record<string, string>;
@@ -34,6 +37,7 @@ describe("project configuration", () => {
   it("provides the required lifecycle scripts", () => {
     const projectPackage = readJsonFile<ProjectPackage>("package.json");
 
+    expect(projectPackage.engines?.node).toBe("24.x");
     expect(projectPackage.license).toBe("MIT");
     expect(projectPackage.private).toBe(true);
     expect(projectPackage.scripts).toMatchObject({
@@ -55,6 +59,9 @@ describe("project configuration", () => {
     );
 
     expect(workflow).toContain("contents: read");
+    expect(workflow.match(/uses: actions\/checkout@v6/gu)).toHaveLength(2);
+    expect(workflow.match(/uses: actions\/setup-node@v6/gu)).toHaveLength(2);
+    expect(workflow.match(/node-version: 24/gu)).toHaveLength(2);
     expect(workflow).toContain("image: postgres:17-alpine");
     expect(workflow).toContain("AI_PROVIDER_MODE: fallback");
     expect(workflow).toContain("run: npm ci");
@@ -67,6 +74,15 @@ describe("project configuration", () => {
     expect(workflow).toContain("run: npm run build");
     expect(workflow).toContain("run: npm run test:e2e");
     expect(workflow).not.toMatch(/vercel|deploy-production|GEMINI_API_KEY/u);
+  });
+
+  it("pins local development to the same Node major as CI", () => {
+    const nodeVersion = readFileSync(
+      path.join(process.cwd(), ".nvmrc"),
+      "utf8",
+    ).trim();
+
+    expect(nodeVersion).toBe("24");
   });
 
   it("keeps strict TypeScript enabled", () => {

@@ -213,7 +213,7 @@ fully understandable while muted.
 
 ## Requirements
 
-- Node.js 20.19 or newer
+- Node.js 24 LTS
 - npm 10 or newer
 - PostgreSQL 15 or newer
 - Chromium for Playwright browser tests
